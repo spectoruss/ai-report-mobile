@@ -11,8 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_SECTIONS } from '../data/mockData';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 
-const BOTTOM_BAR_HEIGHT = 73;
-const PANEL_MAX_HEIGHT = 312;
+const PANEL_MAX_HEIGHT = 340;
 
 interface SectionPickerModalProps {
   visible: boolean;
@@ -42,13 +41,13 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
-          tension: 280,
-          friction: 26,
+          tension: 300,
+          friction: 28,
           useNativeDriver: true,
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 140,
+          duration: 100,
           useNativeDriver: true,
         }),
       ]).start();
@@ -57,27 +56,31 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
 
   if (!visible) return null;
 
-  const bottomPosition = insets.bottom + BOTTOM_BAR_HEIGHT + 8;
-
   return (
     <>
+      {/* Backdrop */}
       <TouchableOpacity
         style={[StyleSheet.absoluteFillObject, styles.backdrop]}
         onPress={onClose}
         activeOpacity={1}
       />
 
+      {/* Panel — grows upward from bottom, covering the bottom bar */}
       <Animated.View
         style={[
-          styles.shadow,
+          styles.wrapper,
           {
-            bottom: bottomPosition,
             opacity: opacityAnim,
             transform: [{ translateY: translateYAnim }, { scaleY: scaleAnim }],
           },
         ]}
       >
-        <View style={styles.panel}>
+        <View style={[styles.panel, { paddingBottom: insets.bottom }]}>
+          {/* Drag handle */}
+          <View style={styles.handleRow} pointerEvents="none">
+            <View style={styles.handle} />
+          </View>
+
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -133,34 +136,48 @@ const styles = StyleSheet.create({
   backdrop: {
     zIndex: 50,
   },
-  shadow: {
+  wrapper: {
     position: 'absolute',
-    left: 8,
-    right: 8,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: 51,
+    // Shadow casts upward (bottom sheet style)
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
-    elevation: 12,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 16,
   },
   panel: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    overflow: 'hidden',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     maxHeight: PANEL_MAX_HEIGHT,
+    overflow: 'hidden',
+  },
+  handleRow: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#d1d5db',
   },
   scroll: {
     flexGrow: 0,
   },
   scrollContent: {
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 14,
   },
   rowActive: {
@@ -184,7 +201,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 14,
   },
   addIconWrap: {
