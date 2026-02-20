@@ -102,6 +102,47 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
     setAttachMediaVisible(false);
   }
 
+  async function handleDirectCamera() {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const subsection = section.subsections[0];
+      addToQueue({
+        id: Date.now().toString(),
+        sectionId: section.id,
+        sectionTitle: section.title,
+        subsectionId: subsection.id,
+        subsectionTitle: subsection.title,
+        timestamp: new Date(),
+        audio: null,
+        photos: result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` })),
+      });
+    }
+  }
+
+  async function handleDirectGallery() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const subsection = section.subsections[0];
+      addToQueue({
+        id: Date.now().toString(),
+        sectionId: section.id,
+        sectionTitle: section.title,
+        subsectionId: subsection.id,
+        subsectionTitle: subsection.title,
+        timestamp: new Date(),
+        audio: null,
+        photos: result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` })),
+      });
+    }
+  }
+
   async function handleOpenGallery() {
     setAttachMediaVisible(false);
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -243,8 +284,8 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         <View style={styles.floatingBar}>
           <CaptureActionBar
             onMicPress={() => openInput('mic')}
-            onCameraAiPress={() => openInput('camera')}
-            onPhotoPress={() => openInput('photo')}
+            onCameraAiPress={handleDirectCamera}
+            onPhotoPress={handleDirectGallery}
           />
         </View>
       </View>
