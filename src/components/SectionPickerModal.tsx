@@ -161,11 +161,11 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
 
-  // Floating add button — sits ADD_BTN_SIZE + gap above panel bottom
+  // Floating add button — sits flush at panel top
   addButtonWrap: {
     position: 'absolute',
     left: PANEL_LEFT,
-    bottom: PANEL_MAX_HEIGHT + 8,
+    bottom: PANEL_MAX_HEIGHT + 12,
     zIndex: 52,
   },
   addButton: {
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: PANEL_LEFT,
     right: PANEL_RIGHT,
-    bottom: 0,
+    bottom: 12,
     zIndex: 51,
     shadowColor: '#000',
     shadowOffset: { width: -2, height: -4 },
