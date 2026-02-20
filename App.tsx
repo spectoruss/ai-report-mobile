@@ -12,6 +12,7 @@ import { AiObservationsScreen } from './src/screens/AiObservationsScreen';
 import { CollectionDetailScreen } from './src/screens/CollectionDetailScreen';
 import { ItemDetailScreen } from './src/screens/ItemDetailScreen';
 import { CommentMatchScreen } from './src/screens/CommentMatchScreen';
+import { CameraScreen } from './src/screens/CameraScreen';
 import { ToolbarProvider } from './src/context/ToolbarContext';
 import { AiQueueProvider } from './src/context/AiQueueContext';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   AiObservations: undefined;
   CollectionDetail: { collectionId: string };
   CommentMatch: undefined;
+  Camera: { collectionId: string };
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -55,6 +57,11 @@ export default function App() {
                 <Stack.Screen
                   name="CommentMatch"
                   component={CommentMatchScreen}
+                  options={{ presentation: 'modal' }}
+                />
+                <Stack.Screen
+                  name="Camera"
+                  component={CameraScreen}
                   options={{ presentation: 'modal' }}
                 />
               </Stack.Navigator>

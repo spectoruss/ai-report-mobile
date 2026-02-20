@@ -129,7 +129,7 @@ export function AiObservationsScreen({ navigation }: AiObservationsScreenProps) 
   }
 
   function handleAddPhoto(collectionId: string) {
-    addPhotoToCollection(collectionId);
+    navigation.navigate('Camera', { collectionId });
   }
 
   const isEmpty = allSectionIds.length === 0;
