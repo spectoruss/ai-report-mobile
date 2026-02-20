@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { REPORT_SECTIONS, Section } from '../data/mockData';
-import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { ReportTopBar } from '../components/ReportTopBar';
+import { SearchPill } from '../components/SearchPill';
 
 interface HomeScreenProps {
   navigation: any;
@@ -58,9 +58,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
       {/* Search-focused bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity style={styles.searchPill} activeOpacity={0.7}>
-          <FontAwesome7Pro name="magnifying-glass" size={16} color="#052339" />
-        </TouchableOpacity>
+        <SearchPill style={styles.searchPill} />
       </View>
     </View>
   );

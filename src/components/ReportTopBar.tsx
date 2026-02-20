@@ -6,9 +6,10 @@ import { useAiQueue } from '../context/AiQueueContext';
 interface ReportTopBarProps {
   navigation: any;
   onBack?: () => void;
+  title?: string;
 }
 
-export function ReportTopBar({ navigation, onBack }: ReportTopBarProps) {
+export function ReportTopBar({ navigation, onBack, title = 'Residential Report' }: ReportTopBarProps) {
   const { queue, processingBySection } = useAiQueue();
   const processingCount = Object.values(processingBySection).reduce((sum, s) => sum + s.count, 0);
   const totalCount = queue.length + processingCount;
@@ -23,7 +24,7 @@ export function ReportTopBar({ navigation, onBack }: ReportTopBarProps) {
           onPress={onBack}
         />
       )}
-      <Text style={styles.title}>Residential Report</Text>
+      <Text style={styles.title} numberOfLines={1}>{title}</Text>
       <View>
         <IconButton
           name="cloud-arrow-up"
@@ -36,7 +37,6 @@ export function ReportTopBar({ navigation, onBack }: ReportTopBarProps) {
           </View>
         )}
       </View>
-      <IconButton name="bolt" iconColor="#09334b" backgroundColor="#eef1f7" />
       <IconButton
         name="ellipsis-vertical"
         iconColor="#052339"

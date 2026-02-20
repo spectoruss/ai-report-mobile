@@ -13,6 +13,7 @@ import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { ReportTopBar } from '../components/ReportTopBar';
 import { CaptureActionBar } from '../components/CaptureActionBar';
 import { AudioBottomSheet } from '../components/AudioBottomSheet';
+import { SearchPill } from '../components/SearchPill';
 import { AppBottomSheet } from '../components/AppBottomSheet';
 import { AttachMediaSheet } from '../components/AttachMediaSheet';
 import { useAiQueue } from '../context/AiQueueContext';
@@ -105,7 +106,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         <Text style={styles.statusIcons}>▲ ■</Text>
       </View>
 
-      <ReportTopBar navigation={navigation} onBack={() => navigation.goBack()} />
+      <ReportTopBar navigation={navigation} onBack={() => navigation.goBack()} title={section.title} />
 
       {/* Scroll area + floating action bar */}
       <View style={styles.scrollWrapper}>
@@ -183,9 +184,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
 
       {/* Search-focused bottom nav */}
       <View style={[styles.searchNavBar, { paddingBottom: insets.bottom + 12 }]}>
-        <TouchableOpacity style={styles.searchPill} activeOpacity={0.7}>
-          <FontAwesome7Pro name="magnifying-glass" size={16} color="#052339" />
-        </TouchableOpacity>
+        <SearchPill style={styles.searchPill} />
         <IconButton
           name="chevron-left"
           iconColor="#052339"
