@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
+    overflow: 'hidden',
   },
   masthead: {
     height: 96,

@@ -331,6 +331,7 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
+    overflow: 'hidden',
   },
   topBar: {
     flexDirection: 'row',

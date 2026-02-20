@@ -224,6 +224,7 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',

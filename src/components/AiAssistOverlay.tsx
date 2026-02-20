@@ -316,10 +316,13 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     color: '#09334b',
     paddingVertical: 0,
     outlineWidth: 0,
+    outline: 'none',
+    boxShadow: 'none',
+    borderWidth: 0,
   } as any,
   cancelButton: {
     paddingHorizontal: 4,

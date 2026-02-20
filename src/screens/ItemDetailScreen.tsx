@@ -210,6 +210,7 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
+    overflow: 'hidden',
   },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40 },

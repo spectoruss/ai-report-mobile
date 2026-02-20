@@ -288,6 +288,7 @@ const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
+    overflow: 'hidden',
   },
   scrollWrapper: { flex: 1 },
   scroll: { flex: 1 },

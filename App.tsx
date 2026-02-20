@@ -41,7 +41,7 @@ export default function App() {
   if (!fontsLoaded) return <View style={{ flex: 1 }} />;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, overflow: 'hidden' }}>
       <SafeAreaProvider>
         <ToolbarProvider>
           <AiQueueProvider>
