@@ -186,6 +186,7 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
         currentSectionId={sectionId}
         onSelect={handleSectionSelect}
         onClose={() => setSectionPickerVisible(false)}
+        onAddSection={() => navigation.navigate('NewSection')}
       />
 
       {/* Coachmark — explain tap vs press & hold on nav arrows */}

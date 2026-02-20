@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_SECTIONS } from '../data/mockData';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 
-// Height of the bottom bar in both screens (border + paddingTop + button + paddingBottom)
 const BOTTOM_BAR_HEIGHT = 73;
 const PANEL_MAX_HEIGHT = 312;
 
@@ -20,14 +19,14 @@ interface SectionPickerModalProps {
   currentSectionId: string;
   onSelect: (sectionId: string) => void;
   onClose: () => void;
+  onAddSection?: () => void;
 }
 
-export function SectionPickerModal({ visible, currentSectionId, onSelect, onClose }: SectionPickerModalProps) {
+export function SectionPickerModal({ visible, currentSectionId, onSelect, onClose, onAddSection }: SectionPickerModalProps) {
   const insets = useSafeAreaInsets();
   const scaleAnim = useRef(new Animated.Value(0.01)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
-  // translateY = PANEL_MAX_HEIGHT/2 * (1 - scale) — keeps bottom edge fixed during scale
   const oneRef = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(
     Animated.multiply(
@@ -62,14 +61,12 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
 
   return (
     <>
-      {/* Backdrop — tap anywhere to close */}
       <TouchableOpacity
         style={[StyleSheet.absoluteFillObject, styles.backdrop]}
         onPress={onClose}
         activeOpacity={1}
       />
 
-      {/* Dropdown panel — grows up from pill position */}
       <Animated.View
         style={[
           styles.shadow,
@@ -87,7 +84,7 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {REPORT_SECTIONS.map((section, index) => {
+            {REPORT_SECTIONS.map((section) => {
               const isActive = section.id === currentSectionId;
               return (
                 <TouchableOpacity
@@ -99,9 +96,6 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
                     onClose();
                   }}
                 >
-                  <Text style={[styles.rowIndex, isActive && styles.rowIndexActive]}>
-                    {index + 1}
-                  </Text>
                   <FontAwesome7Pro name={section.icon} size={16} color={isActive ? '#0779ac' : '#647382'} />
                   <Text style={[styles.rowTitle, isActive && styles.rowTitleActive]} numberOfLines={1}>
                     {section.title}
@@ -113,6 +107,22 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
               );
             })}
           </ScrollView>
+
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={styles.addRow}
+              activeOpacity={0.7}
+              onPress={() => {
+                onClose();
+                onAddSection?.();
+              }}
+            >
+              <View style={styles.addIconWrap}>
+                <FontAwesome7Pro name="plus" size={13} color="#647382" />
+              </View>
+              <Text style={styles.addLabel}>New Section</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Animated.View>
     </>
@@ -156,16 +166,6 @@ const styles = StyleSheet.create({
   rowActive: {
     backgroundColor: '#f0f9ff',
   },
-  rowIndex: {
-    width: 20,
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#c4cdd5',
-    textAlign: 'center',
-  },
-  rowIndexActive: {
-    color: '#0779ac',
-  },
   rowTitle: {
     flex: 1,
     fontSize: 15,
@@ -175,5 +175,29 @@ const styles = StyleSheet.create({
   rowTitleActive: {
     fontWeight: '600',
     color: '#052339',
+  },
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  addIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: '#eef1f7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addLabel: {
+    fontSize: 15,
+    color: '#647382',
+    fontWeight: '400',
   },
 });

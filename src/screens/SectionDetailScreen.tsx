@@ -249,6 +249,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         currentSectionId={sectionId}
         onSelect={handleSectionSelect}
         onClose={() => setSectionPickerVisible(false)}
+        onAddSection={() => navigation.navigate('NewSection')}
       />
 
       {/* Coachmark — shown on first input added, points at sparkles button */}
