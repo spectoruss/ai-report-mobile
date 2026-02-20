@@ -1,20 +1,38 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useAiQueue } from '../context/AiQueueContext';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface CoachmarkOverlayProps {
+  show: boolean;
+  onDismiss: () => void;
+  variant?: 'top' | 'bottom';
   topOffset?: number;
+  bottomOffset?: number;
+  caretRight?: number;
+  title: string;
+  description: string;
+  iconName: string;
+  iconColor?: string;
 }
 
-export function CoachmarkOverlay({ topOffset = 114 }: CoachmarkOverlayProps) {
-  const { showCoachmark, dismissCoachmark } = useAiQueue();
+export function CoachmarkOverlay({
+  show,
+  onDismiss,
+  variant = 'top',
+  topOffset = 114,
+  bottomOffset = 80,
+  caretRight = 67,
+  title,
+  description,
+  iconName,
+  iconColor = '#5cff9d',
+}: CoachmarkOverlayProps) {
   const translateX = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
   useEffect(() => {
-    if (showCoachmark) {
+    if (show) {
       translateX.setValue(SCREEN_WIDTH);
       const delay = setTimeout(() => {
         Animated.spring(translateX, {
@@ -26,19 +44,24 @@ export function CoachmarkOverlay({ topOffset = 114 }: CoachmarkOverlayProps) {
       }, 300);
       return () => clearTimeout(delay);
     }
-  }, [showCoachmark]);
+  }, [show]);
 
-  if (!showCoachmark) return null;
+  if (!show) return null;
+
+  const positionStyle = variant === 'bottom'
+    ? { bottom: bottomOffset }
+    : { top: topOffset };
 
   return (
     <Animated.View
-      style={[styles.overlay, { top: topOffset, transform: [{ translateX }] }]}
+      style={[styles.overlay, positionStyle, { transform: [{ translateX }] }]}
       pointerEvents="box-none"
     >
-      {/* Caret arrow pointing up toward the sparkles button */}
-      <View style={styles.caretRow} pointerEvents="none">
-        <View style={styles.caret} />
-      </View>
+      {variant === 'top' && (
+        <View style={[styles.caretRow, { paddingRight: caretRight }]} pointerEvents="none">
+          <View style={styles.caret} />
+        </View>
+      )}
 
       {/* Card */}
       <View style={styles.card}>
@@ -48,29 +71,33 @@ export function CoachmarkOverlay({ topOffset = 114 }: CoachmarkOverlayProps) {
         {/* Content */}
         <View style={styles.content}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>You've added an input to the Ai Queue!</Text>
+            <Text style={styles.title}>{title}</Text>
           </View>
 
           <View style={styles.row}>
             <View style={styles.iconOuter}>
               <View style={styles.iconInner}>
-                <FontAwesome7Pro name="arrow-pointer" size={12} color="#5cff9d" />
+                <FontAwesome7Pro name={iconName} size={12} color={iconColor} />
               </View>
             </View>
-            <Text style={styles.description}>
-              Go back to the queue when ready to process
-            </Text>
+            <Text style={styles.description}>{description}</Text>
           </View>
 
           <TouchableOpacity
             style={styles.nextButton}
-            onPress={dismissCoachmark}
+            onPress={onDismiss}
             activeOpacity={0.85}
           >
             <Text style={styles.nextLabel}>Got it</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {variant === 'bottom' && (
+        <View style={[styles.caretRowBottom, { paddingRight: caretRight }]} pointerEvents="none">
+          <View style={styles.caret} />
+        </View>
+      )}
     </Animated.View>
   );
 }
@@ -85,8 +112,12 @@ const styles = StyleSheet.create({
   caretRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    paddingRight: 67,
     marginBottom: -12,
+  },
+  caretRowBottom: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: -12,
   },
   caret: {
     width: 23,

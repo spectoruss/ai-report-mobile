@@ -25,6 +25,7 @@ interface AiQueueContextValue {
   processingBySection: Record<string, ProcessingSection>;
   processedCount: number;
   showCoachmark: boolean;
+  showItemCoachmark: boolean;
   addToQueue: (collection: AiCollection) => void;
   addAudioToCollection: (collectionId: string, transcript: string) => void;
   addPhotoToCollection: (collectionId: string) => void;
@@ -32,6 +33,8 @@ interface AiQueueContextValue {
   clearQueue: () => void;
   clearProcessed: () => void;
   dismissCoachmark: () => void;
+  triggerItemCoachmark: () => void;
+  dismissItemCoachmark: () => void;
 }
 
 const AiQueueContext = createContext<AiQueueContextValue>({
@@ -39,6 +42,7 @@ const AiQueueContext = createContext<AiQueueContextValue>({
   processingBySection: {},
   processedCount: 0,
   showCoachmark: false,
+  showItemCoachmark: false,
   addToQueue: () => {},
   addAudioToCollection: () => {},
   addPhotoToCollection: () => {},
@@ -46,6 +50,8 @@ const AiQueueContext = createContext<AiQueueContextValue>({
   clearQueue: () => {},
   clearProcessed: () => {},
   dismissCoachmark: () => {},
+  triggerItemCoachmark: () => {},
+  dismissItemCoachmark: () => {},
 });
 
 export function AiQueueProvider({ children }: { children: React.ReactNode }) {
@@ -53,27 +59,32 @@ export function AiQueueProvider({ children }: { children: React.ReactNode }) {
   const [processingBySection, setProcessingBySection] = useState<Record<string, ProcessingSection>>({});
   const [processedCount, setProcessedCount] = useState(0);
   const [showCoachmark, setShowCoachmark] = useState(false);
+  const [showItemCoachmark, setShowItemCoachmark] = useState(false);
   const hasShownCoachmark = useRef(false);
-  const pendingTimeouts = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const hasShownItemCoachmark = useRef(false);
+  const processingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function addToQueue(collection: AiCollection) {
-    // Show coachmark once on the very first input added
     if (!hasShownCoachmark.current) {
       hasShownCoachmark.current = true;
       setShowCoachmark(true);
     }
-
     setQueue(prev => [...prev, collection]);
-    const timeoutId = setTimeout(() => {
-      pendingTimeouts.current.delete(collection.id);
-      setQueue(prev => prev.filter(c => c.id !== collection.id));
-      setProcessedCount(prev => prev + 1);
-    }, 6000);
-    pendingTimeouts.current.set(collection.id, timeoutId);
   }
 
   function dismissCoachmark() {
     setShowCoachmark(false);
+  }
+
+  function triggerItemCoachmark() {
+    if (!hasShownItemCoachmark.current) {
+      hasShownItemCoachmark.current = true;
+      setShowItemCoachmark(true);
+    }
+  }
+
+  function dismissItemCoachmark() {
+    setShowItemCoachmark(false);
   }
 
   function clearProcessed() {
@@ -99,10 +110,8 @@ export function AiQueueProvider({ children }: { children: React.ReactNode }) {
   }
 
   function analyze() {
-    pendingTimeouts.current.forEach(id => clearTimeout(id));
-    pendingTimeouts.current.clear();
-
     const totalCount = queue.length;
+    if (totalCount === 0) return;
 
     setProcessingBySection(prev => {
       const next = { ...prev };
@@ -117,21 +126,39 @@ export function AiQueueProvider({ children }: { children: React.ReactNode }) {
     });
     setQueue([]);
 
-    setTimeout(() => {
+    if (processingTimeout.current) clearTimeout(processingTimeout.current);
+    processingTimeout.current = setTimeout(() => {
       setProcessingBySection({});
       setProcessedCount(prev => prev + totalCount);
     }, 6000);
   }
 
   function clearQueue() {
-    pendingTimeouts.current.forEach(id => clearTimeout(id));
-    pendingTimeouts.current.clear();
     setQueue([]);
     setProcessingBySection({});
+    if (processingTimeout.current) {
+      clearTimeout(processingTimeout.current);
+      processingTimeout.current = null;
+    }
   }
 
   return (
-    <AiQueueContext.Provider value={{ queue, processingBySection, processedCount, showCoachmark, addToQueue, addAudioToCollection, addPhotoToCollection, analyze, clearQueue, clearProcessed, dismissCoachmark }}>
+    <AiQueueContext.Provider value={{
+      queue,
+      processingBySection,
+      processedCount,
+      showCoachmark,
+      showItemCoachmark,
+      addToQueue,
+      addAudioToCollection,
+      addPhotoToCollection,
+      analyze,
+      clearQueue,
+      clearProcessed,
+      dismissCoachmark,
+      triggerItemCoachmark,
+      dismissItemCoachmark,
+    }}>
       {children}
     </AiQueueContext.Provider>
   );

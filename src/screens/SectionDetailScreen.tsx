@@ -59,7 +59,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
 
   const pendingTranscript = useRef<string>('');
 
-  const { addToQueue } = useAiQueue();
+  const { addToQueue, showCoachmark, dismissCoachmark } = useAiQueue();
 
   function setRating(subsectionId: string, rating: Rating) {
     setRatings(prev => ({ ...prev, [subsectionId]: rating }));
@@ -112,13 +112,6 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Status bar */}
-      <View style={styles.statusBar}>
-        <Text style={styles.time}>9:41</Text>
-        <View style={styles.dynamicIsland} />
-        <Text style={styles.statusIcons}>▲ ■</Text>
-      </View>
-
       <ReportTopBar
         navigation={navigation}
         onBack={() => navigation.goBack()}
@@ -252,7 +245,13 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
       />
 
       {/* Coachmark — shown on first input added, points at sparkles button */}
-      <CoachmarkOverlay />
+      <CoachmarkOverlay
+        show={showCoachmark}
+        onDismiss={dismissCoachmark}
+        title="You've added an input to the Ai Queue!"
+        description="Go back to the queue when ready to process"
+        iconName="arrow-pointer"
+      />
 
       {/* Audio recording sheet */}
       <AudioBottomSheet
@@ -282,21 +281,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
   },
-  statusBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-  },
-  time: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
-  dynamicIsland: {
-    width: 122,
-    height: 30,
-    backgroundColor: '#000',
-    borderRadius: 9999,
-  },
-  statusIcons: { fontSize: 11, color: '#1f2937' },
   scrollWrapper: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: 96 },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import { IconButton } from '../components/IconButton';
 import { ReportTopBar } from '../components/ReportTopBar';
 import { ProcessedBanner } from '../components/ProcessedBanner';
 import { SectionPickerModal } from '../components/SectionPickerModal';
+import { CoachmarkOverlay } from '../components/CoachmarkOverlay';
+import { useAiQueue } from '../context/AiQueueContext';
 
 interface ItemDetailScreenProps {
   navigation: any;
@@ -35,6 +37,12 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   const [checkedOptions, setCheckedOptions] = useState<Record<string, boolean>>({});
   const [sectionPickerVisible, setSectionPickerVisible] = useState(false);
+
+  const { showItemCoachmark, triggerItemCoachmark, dismissItemCoachmark } = useAiQueue();
+
+  useEffect(() => {
+    triggerItemCoachmark();
+  }, []);
 
   function toggleOption(optionId: string) {
     setCheckedOptions(prev => ({ ...prev, [optionId]: !prev[optionId] }));
@@ -89,13 +97,6 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Status bar */}
-      <View style={styles.statusBar}>
-        <Text style={styles.time}>9:41</Text>
-        <View style={styles.dynamicIsland} />
-        <Text style={styles.statusIcons}>▲ ■</Text>
-      </View>
-
       <ReportTopBar
         navigation={navigation}
         onBack={() => navigation.goBack()}
@@ -182,6 +183,18 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
         onSelect={handleSectionSelect}
         onClose={() => setSectionPickerVisible(false)}
       />
+
+      {/* Coachmark — press & hold nav arrows to jump sections */}
+      <CoachmarkOverlay
+        show={showItemCoachmark}
+        onDismiss={dismissItemCoachmark}
+        variant="bottom"
+        bottomOffset={insets.bottom + 73}
+        caretRight={40}
+        title="Press & hold to jump sections"
+        description="Long press either arrow to skip to the previous or next section"
+        iconName="hand"
+      />
     </View>
   );
 }
@@ -191,21 +204,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
   },
-  statusBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-  },
-  time: { fontSize: 14, fontWeight: '600', color: '#1f2937' },
-  dynamicIsland: {
-    width: 122,
-    height: 30,
-    backgroundColor: '#000',
-    borderRadius: 9999,
-  },
-  statusIcons: { fontSize: 11, color: '#1f2937' },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40 },
   itemTitle: {
