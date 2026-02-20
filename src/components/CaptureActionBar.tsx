@@ -9,12 +9,10 @@ interface CaptureActionBarProps {
   onMicPress: () => void;
   onCameraAiPress: () => void;
   onPhotoPress: () => void;
-  onSearchPress?: () => void;
 }
 
-export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, onSearchPress }: CaptureActionBarProps) {
-  const { handedness, visibility } = useToolbar();
-  const isLeft = handedness === 'left';
+export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress }: CaptureActionBarProps) {
+  const { visibility } = useToolbar();
 
   const hasAnyUtility = visibility.torch || visibility.cya;
 
@@ -27,10 +25,6 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, on
     <View style={styles.placeholder} />
   );
 
-  const search = (
-    <IconButton name="magnifying-glass" iconColor="#09334b" onPress={onSearchPress} />
-  );
-
   return (
     <LinearGradient
       colors={['rgba(255,255,255,0)', '#ffffff']}
@@ -39,7 +33,7 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, on
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {isLeft ? search : utilities}
+      {utilities}
       <CaptureAiPill
         onCameraPress={onCameraAiPress}
         onMicPress={onMicPress}
@@ -48,7 +42,8 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, on
         showMic={visibility.audio}
         showPhoto={visibility.gallery}
       />
-      {isLeft ? utilities : search}
+      {/* Mirror placeholder keeps pill centered when utilities are hidden */}
+      <View style={styles.placeholder} />
     </LinearGradient>
   );
 }

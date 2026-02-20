@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { REPORT_SECTIONS, Section } from '../data/mockData';
-import { IconButton } from '../components/IconButton';
+import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { ReportTopBar } from '../components/ReportTopBar';
 
 interface HomeScreenProps {
@@ -56,12 +56,11 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         ))}
       </ScrollView>
 
-      {/* Bottom action bar */}
+      {/* Search-focused bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-        <View style={styles.sideGroup}>
-          <IconButton name="bolt" iconColor="#09334b" backgroundColor="transparent" />
-          <IconButton name="aperture" iconColor="#09334b" backgroundColor="transparent" />
-        </View>
+        <TouchableOpacity style={styles.searchPill} activeOpacity={0.7}>
+          <FontAwesome7Pro name="magnifying-glass" size={16} color="#052339" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -138,16 +137,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#d1d5db',
     backgroundColor: '#ffffff',
   },
-  sideGroup: {
-    flexDirection: 'row',
+  searchPill: {
+    height: 48,
     backgroundColor: '#eef1f7',
     borderRadius: 100,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
 });

@@ -31,6 +31,9 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
   const { sectionId } = route.params;
 
   const section = REPORT_SECTIONS.find(s => s.id === sectionId)!;
+  const sectionIndex = REPORT_SECTIONS.findIndex(s => s.id === sectionId);
+  const hasPrev = sectionIndex > 0;
+  const hasNext = sectionIndex < REPORT_SECTIONS.length - 1;;
 
   // Local state for ratings
   const [ratings, setRatings] = useState<Record<string, Rating>>(() => {
@@ -68,6 +71,14 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
     setAttachMediaVisible(true);
   }
 
+  function goToPrev() {
+    if (hasPrev) navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex - 1].id });
+  }
+
+  function goToNext() {
+    if (hasNext) navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex + 1].id });
+  }
+
   function handleNotNow() {
     const subsection = section.subsections.find(ss => ss.id === activeSubsectionId);
     const isAudio = inputType === 'mic';
@@ -94,7 +105,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         <Text style={styles.statusIcons}>▲ ■</Text>
       </View>
 
-      <ReportTopBar navigation={navigation} />
+      <ReportTopBar navigation={navigation} onBack={() => navigation.goBack()} />
 
       {/* Scroll area + floating action bar */}
       <View style={styles.scrollWrapper}>
@@ -170,15 +181,23 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         </View>
       </View>
 
-      {/* Section nav bar */}
-      <View style={[styles.sectionNavBar, { paddingBottom: insets.bottom + 28 }]}>
-        <IconButton name="arrow-left" iconColor="#052339" onPress={() => navigation.goBack()} />
-        <View style={styles.sectionPill}>
-          <FontAwesome7Pro name="magnifying-glass" size={14} color="#052339" />
-          <Text style={styles.sectionPillText}>{section.title}</Text>
-        </View>
-        <IconButton name="chevron-left" iconColor="#052339" />
-        <IconButton name="chevron-right" iconColor="#052339" />
+      {/* Search-focused bottom nav */}
+      <View style={[styles.searchNavBar, { paddingBottom: insets.bottom + 12 }]}>
+        <TouchableOpacity style={styles.searchPill} activeOpacity={0.7}>
+          <FontAwesome7Pro name="magnifying-glass" size={16} color="#052339" />
+        </TouchableOpacity>
+        <IconButton
+          name="chevron-left"
+          iconColor="#052339"
+          onPress={goToPrev}
+          style={!hasPrev ? styles.navDisabled : undefined}
+        />
+        <IconButton
+          name="chevron-right"
+          iconColor="#052339"
+          onPress={goToNext}
+          style={!hasNext ? styles.navDisabled : undefined}
+        />
       </View>
 
       {/* Audio recording sheet */}
@@ -335,29 +354,27 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     fontWeight: '500',
   },
-  sectionNavBar: {
+  searchNavBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: '#d1d5db',
     backgroundColor: '#ffffff',
   },
-  sectionPill: {
+  searchPill: {
     flex: 1,
     height: 48,
     backgroundColor: '#eef1f7',
     borderRadius: 100,
     paddingHorizontal: 16,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
-  sectionPillText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#052339',
+  navDisabled: {
+    opacity: 0.4,
   },
 });
