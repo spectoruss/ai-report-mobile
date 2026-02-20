@@ -35,6 +35,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 export default function App() {
   const [fontsLoaded] = useFonts({
     'FontAwesome7Pro-Regular': require('./assets/Fonts/Font Awesome 7 Pro-Regular-400.otf'),
+    'FontAwesome7Pro-Solid': require('./assets/Fonts/Font Awesome 7 Pro-Solid-900.otf'),
   });
 
   if (!fontsLoaded) return <View style={{ flex: 1 }} />;

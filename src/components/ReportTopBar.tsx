@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { IconButton } from './IconButton';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
+import { FontAwesome7ProSolid } from './FontAwesome7ProSolid';
 import { useAiQueue } from '../context/AiQueueContext';
 import { AiAssistOverlay } from './AiAssistOverlay';
 
@@ -60,13 +61,13 @@ export function ReportTopBar({ navigation, onBack, backIcon = 'arrow-left' }: Re
       </View>
 
       <View>
-        <IconButton
-          name="sparkles"
-          iconColor="#052339"
-          backgroundColor="#eef1f7"
-          borderRadius={16}
+        <TouchableOpacity
+          style={styles.sparklesButton}
+          activeOpacity={0.7}
           onPress={() => navigation.navigate('AiObservations')}
-        />
+        >
+          <FontAwesome7ProSolid name="sparkles" size={18} color="#052339" />
+        </TouchableOpacity>
         {totalCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{totalCount}</Text>
@@ -119,6 +120,14 @@ const styles = StyleSheet.create({
     boxShadow: 'none',
     borderWidth: 0,
   } as any,
+  sparklesButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#eef1f7',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badge: {
     position: 'absolute',
     top: -4,
