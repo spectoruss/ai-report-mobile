@@ -234,8 +234,7 @@ function SortableList({ items, onReorder, onToggle, isAi = false }: SortableList
 
 export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
   const insets = useSafeAreaInsets();
-  const { visibility, setVisibility, resetVisibility } = useToolbar();
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>('right');
+  const { handedness, setHandedness, visibility, setVisibility, resetVisibility } = useToolbar();
   const [utilityOrder, setUtilityOrder] = useState<ToolbarItem[]>(INITIAL_UTILITIES);
   const [aiOrder, setAiOrder] = useState<ToolbarItem[]>(INITIAL_AI);
 
@@ -258,7 +257,7 @@ export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
   function handleReset() {
     setUtilityOrder(INITIAL_UTILITIES);
     setAiOrder(INITIAL_AI);
-    setLayoutMode('right');
+    setHandedness('right');
     resetVisibility();
   }
 
@@ -292,14 +291,14 @@ export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
           <LayoutCard
             label="Right Hand"
             mode="right"
-            selected={layoutMode === 'right'}
-            onSelect={() => setLayoutMode('right')}
+            selected={handedness === 'right'}
+            onSelect={() => setHandedness('right')}
           />
           <LayoutCard
             label="Left Hand"
             mode="left"
-            selected={layoutMode === 'left'}
-            onSelect={() => setLayoutMode('left')}
+            selected={handedness === 'left'}
+            onSelect={() => setHandedness('left')}
           />
         </View>
 
