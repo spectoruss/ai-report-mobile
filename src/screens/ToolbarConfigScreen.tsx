@@ -290,13 +290,13 @@ export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
         <Text style={styles.sectionTitle}>Layout</Text>
         <View style={styles.layoutCards}>
           <LayoutCard
-            label="Right"
+            label="Right Hand"
             mode="right"
             selected={layoutMode === 'right'}
             onSelect={() => setLayoutMode('right')}
           />
           <LayoutCard
-            label="Left"
+            label="Left Hand"
             mode="left"
             selected={layoutMode === 'left'}
             onSelect={() => setLayoutMode('left')}
