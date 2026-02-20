@@ -115,6 +115,9 @@ const styles = StyleSheet.create({
     color: '#09334b',
     paddingVertical: 0,
     outlineWidth: 0,
+    outline: 'none',
+    boxShadow: 'none',
+    borderWidth: 0,
   } as any,
   badge: {
     position: 'absolute',
