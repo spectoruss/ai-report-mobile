@@ -189,11 +189,6 @@ const styles = StyleSheet.create({
     right: PANEL_RIGHT,
     bottom: 12,
     zIndex: 51,
-    shadowColor: '#000',
-    shadowOffset: { width: -2, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 14,
   },
   panel: {
     backgroundColor: '#eef1f7',
