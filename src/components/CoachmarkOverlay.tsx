@@ -67,9 +67,6 @@ export function CoachmarkOverlay({
 
       {/* Card */}
       <View style={styles.card}>
-        {/* Decorative blob */}
-        <View style={styles.blob} pointerEvents="none" />
-
         {/* Content */}
         <View style={styles.content}>
           <View style={styles.titleRow}>
@@ -138,15 +135,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 14,
     elevation: 14,
-  },
-  blob: {
-    position: 'absolute',
-    width: 212,
-    height: 212,
-    borderRadius: 106,
-    backgroundColor: 'rgba(9, 164, 233, 0.28)',
-    left: -74,
-    top: -65,
   },
   content: {
     padding: 16,
