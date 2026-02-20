@@ -42,7 +42,11 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   useEffect(() => {
     triggerItemCoachmark();
-  }, []);
+    const unsubscribe = navigation.addListener('blur', () => {
+      dismissItemCoachmark();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   function toggleOption(optionId: string) {
     setCheckedOptions(prev => ({ ...prev, [optionId]: !prev[optionId] }));

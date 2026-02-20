@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -60,6 +60,13 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
   const pendingTranscript = useRef<string>('');
 
   const { addToQueue, showCoachmark, dismissCoachmark } = useAiQueue();
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      dismissCoachmark();
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   function setRating(subsectionId: string, rating: Rating) {
     setRatings(prev => ({ ...prev, [subsectionId]: rating }));
@@ -248,6 +255,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
       <CoachmarkOverlay
         show={showCoachmark}
         onDismiss={dismissCoachmark}
+        topOffset={insets.top + 72}
         title="You've added an input to the Ai Queue!"
         description="Go back to the queue when ready to process"
         iconName="arrow-pointer"
