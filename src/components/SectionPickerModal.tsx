@@ -11,7 +11,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_SECTIONS } from '../data/mockData';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 
-const PANEL_MAX_HEIGHT = 340;
+// Left aligns with section pill start: padding(12) + back-button(48) + gap(8) = 68
+const PANEL_LEFT = 68;
+const PANEL_RIGHT = 12;
+const PANEL_MAX_HEIGHT = 344;
+const ADD_BTN_SIZE = 48;
 
 interface SectionPickerModalProps {
   visible: boolean;
@@ -21,17 +25,29 @@ interface SectionPickerModalProps {
   onAddSection?: () => void;
 }
 
-export function SectionPickerModal({ visible, currentSectionId, onSelect, onClose, onAddSection }: SectionPickerModalProps) {
+export function SectionPickerModal({
+  visible,
+  currentSectionId,
+  onSelect,
+  onClose,
+  onAddSection,
+}: SectionPickerModalProps) {
   const insets = useSafeAreaInsets();
+
+  // Panel: scale from bottom
   const scaleAnim = useRef(new Animated.Value(0.01)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-
   const oneRef = useRef(new Animated.Value(1)).current;
   const translateYAnim = useRef(
     Animated.multiply(
       Animated.subtract(oneRef, scaleAnim),
       PANEL_MAX_HEIGHT / 2
     )
+  ).current;
+
+  // Add button: slide up from panel top + fade
+  const btnTranslateY = useRef(
+    Animated.multiply(Animated.subtract(oneRef, opacityAnim), 10)
   ).current;
 
   useEffect(() => {
@@ -47,7 +63,7 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 100,
+          duration: 120,
           useNativeDriver: true,
         }),
       ]).start();
@@ -58,29 +74,46 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Full-screen backdrop */}
       <TouchableOpacity
         style={[StyleSheet.absoluteFillObject, styles.backdrop]}
         onPress={onClose}
         activeOpacity={1}
       />
 
-      {/* Panel — grows upward from bottom, covering the bottom bar */}
+      {/* Floating add button — fades in above the panel */}
       <Animated.View
         style={[
-          styles.wrapper,
+          styles.addButtonWrap,
+          {
+            opacity: opacityAnim,
+            transform: [{ translateY: btnTranslateY }],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.addButton}
+          activeOpacity={0.7}
+          onPress={() => {
+            onClose();
+            onAddSection?.();
+          }}
+        >
+          <FontAwesome7Pro name="plus" size={16} color="#052339" />
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Panel — grows upward from the pill position */}
+      <Animated.View
+        style={[
+          styles.panelWrap,
           {
             opacity: opacityAnim,
             transform: [{ translateY: translateYAnim }, { scaleY: scaleAnim }],
           },
         ]}
       >
-        <View style={[styles.panel, { paddingBottom: insets.bottom }]}>
-          {/* Drag handle */}
-          <View style={styles.handleRow} pointerEvents="none">
-            <View style={styles.handle} />
-          </View>
-
+        <View style={[styles.panel, { paddingBottom: insets.bottom + 8 }]}>
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -99,33 +132,24 @@ export function SectionPickerModal({ visible, currentSectionId, onSelect, onClos
                     onClose();
                   }}
                 >
-                  <FontAwesome7Pro name={section.icon} size={16} color={isActive ? '#0779ac' : '#647382'} />
-                  <Text style={[styles.rowTitle, isActive && styles.rowTitleActive]} numberOfLines={1}>
+                  <FontAwesome7Pro
+                    name={section.icon}
+                    size={16}
+                    color={isActive ? '#0779ac' : '#647382'}
+                  />
+                  <Text
+                    style={[styles.rowTitle, isActive && styles.rowTitleActive]}
+                    numberOfLines={1}
+                  >
                     {section.title}
                   </Text>
                   {isActive && (
-                    <FontAwesome7Pro name="check" size={14} color="#0779ac" />
+                    <FontAwesome7Pro name="check" size={13} color="#0779ac" />
                   )}
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
-
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.addRow}
-              activeOpacity={0.7}
-              onPress={() => {
-                onClose();
-                onAddSection?.();
-              }}
-            >
-              <View style={styles.addIconWrap}>
-                <FontAwesome7Pro name="plus" size={13} color="#647382" />
-              </View>
-              <Text style={styles.addLabel}>New Section</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </Animated.View>
     </>
@@ -136,52 +160,65 @@ const styles = StyleSheet.create({
   backdrop: {
     zIndex: 50,
   },
-  wrapper: {
+
+  // Floating add button — sits ADD_BTN_SIZE + gap above panel bottom
+  addButtonWrap: {
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: PANEL_LEFT,
+    bottom: PANEL_MAX_HEIGHT + 8,
+    zIndex: 52,
+  },
+  addButton: {
+    width: ADD_BTN_SIZE,
+    height: ADD_BTN_SIZE,
+    borderRadius: ADD_BTN_SIZE / 2,
+    backgroundColor: '#eef1f7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  // Panel — offset from left, grows from pill position
+  panelWrap: {
+    position: 'absolute',
+    left: PANEL_LEFT,
+    right: PANEL_RIGHT,
     bottom: 0,
     zIndex: 51,
-    // Shadow casts upward (bottom sheet style)
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.12,
+    shadowOffset: { width: -2, height: -4 },
+    shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 16,
+    elevation: 14,
   },
   panel: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: '#eef1f7',
+    borderRadius: 16,
     maxHeight: PANEL_MAX_HEIGHT,
     overflow: 'hidden',
-  },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#d1d5db',
   },
   scroll: {
     flexGrow: 0,
   },
   scrollContent: {
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 13,
+    marginHorizontal: 6,
+    marginVertical: 2,
+    borderRadius: 12,
   },
   rowActive: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: '#ffffff',
   },
   rowTitle: {
     flex: 1,
@@ -192,29 +229,5 @@ const styles = StyleSheet.create({
   rowTitleActive: {
     fontWeight: '600',
     color: '#052339',
-  },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  addRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  addIconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    backgroundColor: '#eef1f7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addLabel: {
-    fontSize: 15,
-    color: '#647382',
-    fontWeight: '400',
   },
 });
