@@ -66,7 +66,7 @@ export function ReportTopBar({ navigation, onBack, backIcon = 'arrow-left' }: Re
           activeOpacity={0.7}
           onPress={() => navigation.navigate('AiObservations')}
         >
-          <FontAwesome7ProSolid name="sparkles" size={18} color="#052339" />
+          <FontAwesome7ProSolid name="sparkle" size={18} color="#052339" />
         </TouchableOpacity>
         {totalCount > 0 && (
           <View style={styles.badge}>
