@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { IconButton } from './IconButton';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 import { useAiQueue } from '../context/AiQueueContext';
@@ -13,9 +13,17 @@ interface ReportTopBarProps {
 
 export function ReportTopBar({ navigation, onBack, backIcon = 'arrow-left' }: ReportTopBarProps) {
   const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const inputRef = useRef<TextInput>(null);
   const { queue, processingBySection } = useAiQueue();
   const processingCount = Object.values(processingBySection).reduce((sum, s) => sum + s.count, 0);
   const totalCount = queue.length + processingCount;
+
+  function handleSearchSubmit() {
+    if (searchQuery.trim()) {
+      setSearchVisible(true);
+    }
+  }
 
   return (
     <View style={styles.topBar}>
@@ -29,14 +37,27 @@ export function ReportTopBar({ navigation, onBack, backIcon = 'arrow-left' }: Re
       />
       */}
 
-      <TouchableOpacity
-        style={styles.searchPill}
-        activeOpacity={0.7}
-        onPress={() => setSearchVisible(true)}
-      >
+      <View style={styles.searchPill}>
         <FontAwesome7Pro name="magnifying-glass" size={18} color="#09334b" />
-        <Text style={styles.searchPlaceholder}>Search</Text>
-      </TouchableOpacity>
+        <TextInput
+          ref={inputRef}
+          style={styles.searchInput}
+          placeholder="Search"
+          placeholderTextColor="#647382"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearchSubmit}
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchQuery('')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <FontAwesome7Pro name="xmark-circle" size={16} color="#9ca3af" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       <View>
         <IconButton
@@ -61,7 +82,11 @@ export function ReportTopBar({ navigation, onBack, backIcon = 'arrow-left' }: Re
         onPress={() => navigation.navigate('ToolbarConfig')}
       />
 
-      <AiAssistOverlay visible={searchVisible} onClose={() => setSearchVisible(false)} />
+      <AiAssistOverlay
+        visible={searchVisible}
+        initialQuery={searchQuery}
+        onClose={() => { setSearchVisible(false); setSearchQuery(''); }}
+      />
     </View>
   );
 }
@@ -81,13 +106,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     alignItems: 'center',
-    justifyContent: 'flex-start',
     flexDirection: 'row',
     gap: 8,
   },
-  searchPlaceholder: {
+  searchInput: {
+    flex: 1,
     fontSize: 15,
-    color: '#647382',
+    color: '#09334b',
+    paddingVertical: 0,
   },
   badge: {
     position: 'absolute',

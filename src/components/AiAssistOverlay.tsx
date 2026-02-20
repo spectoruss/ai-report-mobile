@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,15 +16,21 @@ import { FontAwesome7Pro } from './FontAwesome7Pro';
 interface AiAssistOverlayProps {
   visible: boolean;
   onClose: () => void;
+  initialQuery?: string;
 }
 
-export function AiAssistOverlay({ visible, onClose }: AiAssistOverlayProps) {
+export function AiAssistOverlay({ visible, onClose, initialQuery = '' }: AiAssistOverlayProps) {
   const insets = useSafeAreaInsets();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
+
+  useEffect(() => {
+    if (visible) {
+      setQuery(initialQuery);
+    }
+  }, [visible, initialQuery]);
 
   function handleSubmit() {
     // TODO: handle query submission
-    setQuery('');
   }
 
   return (
@@ -72,7 +78,6 @@ export function AiAssistOverlay({ visible, onClose }: AiAssistOverlayProps) {
                 placeholderTextColor="#9ca3af"
                 value={query}
                 onChangeText={setQuery}
-                autoFocus
                 multiline
               />
               <TouchableOpacity
