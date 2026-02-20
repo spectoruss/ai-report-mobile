@@ -9,10 +9,9 @@ interface CaptureActionBarProps {
   onMicPress: () => void;
   onCameraAiPress: () => void;
   onPhotoPress: () => void;
-  onSearchPress?: () => void;
 }
 
-export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, onSearchPress }: CaptureActionBarProps) {
+export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress }: CaptureActionBarProps) {
   const { handedness, visibility } = useToolbar();
   const isLeft = handedness === 'left';
 
@@ -27,10 +26,6 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, on
     <View style={styles.placeholder} />
   );
 
-  const search = (
-    <IconButton name="magnifying-glass" iconColor="#09334b" onPress={onSearchPress} />
-  );
-
   return (
     <LinearGradient
       colors={['rgba(255,255,255,0)', '#ffffff']}
@@ -39,7 +34,7 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, on
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {isLeft ? search : utilities}
+      {isLeft ? utilities : <View style={styles.placeholder} />}
       <CaptureAiPill
         onCameraPress={onCameraAiPress}
         onMicPress={onMicPress}
@@ -48,7 +43,7 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress, on
         showMic={visibility.audio}
         showPhoto={visibility.gallery}
       />
-      {isLeft ? utilities : search}
+      {isLeft ? <View style={styles.placeholder} /> : utilities}
     </LinearGradient>
   );
 }

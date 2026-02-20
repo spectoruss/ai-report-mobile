@@ -3,8 +3,9 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { REPORT_SECTIONS, Section } from '../data/mockData';
-import { IconButton } from '../components/IconButton';
+import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { ReportTopBar } from '../components/ReportTopBar';
+import { ProcessedBanner } from '../components/ProcessedBanner';
 
 interface HomeScreenProps {
   navigation: any;
@@ -26,8 +27,12 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         <Text style={styles.statusIcons}>▲ ■</Text>
       </View>
 
-      <ReportTopBar navigation={navigation} />
-
+      <ReportTopBar
+        navigation={navigation}
+        backIcon="xmark"
+        onBack={() => navigation.goBack()}
+      />
+      <ProcessedBanner />
       {/* Masthead photo */}
       <View style={styles.masthead}>
         <View style={styles.mastheadPlaceholder}>
@@ -46,7 +51,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             activeOpacity={0.7}
           >
             <View style={styles.listItemLeft}>
-              <View style={styles.checkCircle} />
+              <FontAwesome7Pro name={section.icon} size={18} color="#647382" />
             </View>
             <Text style={styles.listItemText} numberOfLines={1}>{section.title}</Text>
             <View style={styles.listItemRight}>
@@ -56,13 +61,18 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         ))}
       </ScrollView>
 
-      {/* Bottom action bar */}
+      {/* Bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-        <View style={styles.sideGroup}>
-          <IconButton name="bolt" iconColor="#09334b" backgroundColor="transparent" />
-          <IconButton name="aperture" iconColor="#09334b" backgroundColor="transparent" />
-        </View>
+        <TouchableOpacity
+          style={styles.exitButton}
+          activeOpacity={0.7}
+          onPress={() => navigation.goBack()}
+        >
+          <FontAwesome7Pro name="arrow-left-from-line" size={16} color="#052339" />
+          <Text style={styles.exitLabel}>Exit</Text>
+        </TouchableOpacity>
       </View>
+
     </View>
   );
 }
@@ -103,6 +113,28 @@ const styles = StyleSheet.create({
   },
   list: { flex: 1 },
   listContent: { paddingBottom: 8 },
+  bottomBar: {
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e8eaed',
+    backgroundColor: '#ffffff',
+    alignItems: 'flex-start',
+  },
+  exitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    height: 48,
+    paddingHorizontal: 20,
+    backgroundColor: '#eef1f7',
+    borderRadius: 16,
+  },
+  exitLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#052339',
+  },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -118,13 +150,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-  },
   listItemText: {
     flex: 1,
     fontSize: 18,
@@ -136,18 +161,5 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  bottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: '#ffffff',
-  },
-  sideGroup: {
-    flexDirection: 'row',
-    backgroundColor: '#eef1f7',
-    borderRadius: 100,
   },
 });

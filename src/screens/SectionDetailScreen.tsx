@@ -8,13 +8,16 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_SECTIONS, Rating, Comment } from '../data/mockData'; // Comment kept for future use
-import { IconButton } from '../components/IconButton';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
+import { IconButton } from '../components/IconButton';
 import { ReportTopBar } from '../components/ReportTopBar';
 import { CaptureActionBar } from '../components/CaptureActionBar';
 import { AudioBottomSheet } from '../components/AudioBottomSheet';
 import { AppBottomSheet } from '../components/AppBottomSheet';
 import { AttachMediaSheet } from '../components/AttachMediaSheet';
+import { SectionPickerModal } from '../components/SectionPickerModal';
+import { ProcessedBanner } from '../components/ProcessedBanner';
+import { CoachmarkOverlay } from '../components/CoachmarkOverlay';
 import { useAiQueue } from '../context/AiQueueContext';
 
 interface SectionDetailScreenProps {
@@ -31,6 +34,9 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
   const { sectionId } = route.params;
 
   const section = REPORT_SECTIONS.find(s => s.id === sectionId)!;
+  const sectionIndex = REPORT_SECTIONS.findIndex(s => s.id === sectionId);
+  const hasPrevSection = sectionIndex > 0;
+  const hasNextSection = sectionIndex < REPORT_SECTIONS.length - 1;
 
   // Local state for ratings
   const [ratings, setRatings] = useState<Record<string, Rating>>(() => {
@@ -47,18 +53,21 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
 
   const [audioSheetVisible, setAudioSheetVisible] = useState(false);
   const [attachMediaVisible, setAttachMediaVisible] = useState(false);
+  const [sectionPickerVisible, setSectionPickerVisible] = useState(false);
   const [inputType, setInputType] = useState<InputType>('mic');
   const [activeSubsectionId, setActiveSubsectionId] = useState<string | null>(null);
+
   const pendingTranscript = useRef<string>('');
+
   const { addToQueue } = useAiQueue();
 
   function setRating(subsectionId: string, rating: Rating) {
     setRatings(prev => ({ ...prev, [subsectionId]: rating }));
   }
 
-  function openInput(type: InputType, subsectionId?: string) {
+  function openInput(type: InputType) {
     setInputType(type);
-    setActiveSubsectionId(subsectionId ?? section.subsections[0].id);
+    setActiveSubsectionId(section.subsections[0].id);
     setAudioSheetVisible(true);
   }
 
@@ -85,6 +94,22 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
     setAttachMediaVisible(false);
   }
 
+  function handlePrevSection() {
+    if (!hasPrevSection) return;
+    navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex - 1].id });
+  }
+
+  function handleNextSection() {
+    if (!hasNextSection) return;
+    navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex + 1].id });
+  }
+
+  function handleSectionSelect(id: string) {
+    if (id !== sectionId) {
+      navigation.replace('SectionDetail', { sectionId: id });
+    }
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Status bar */}
@@ -94,19 +119,29 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         <Text style={styles.statusIcons}>▲ ■</Text>
       </View>
 
-      <ReportTopBar navigation={navigation} />
-
+      <ReportTopBar
+        navigation={navigation}
+        onBack={() => navigation.goBack()}
+      />
+      <ProcessedBanner />
       {/* Scroll area + floating action bar */}
       <View style={styles.scrollWrapper}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          {section.subsections.map(subsection => {
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {section.subsections.map((subsection) => {
             const currentRating = ratings[subsection.id];
             const subsectionComments = comments[subsection.id] || [];
 
             return (
               <View key={subsection.id}>
-                {/* Subsection row */}
-                <View style={styles.subsectionRow}>
+                {/* Subsection row — taps into ItemDetail */}
+                <TouchableOpacity
+                  style={styles.subsectionRow}
+                  activeOpacity={0.7}
+                  onPress={() => navigation.navigate('ItemDetail', { sectionId, subsectionId: subsection.id })}
+                >
                   <View style={styles.subsectionLeft}>
                     <View style={styles.checkCircle} />
                   </View>
@@ -116,7 +151,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
                   <View style={styles.subsectionRight}>
                     <FontAwesome7Pro name="chevron-right" size={12} color="#6b7280" />
                   </View>
-                </View>
+                </TouchableOpacity>
 
                 {/* Rating segmented control */}
                 <View style={styles.ratingRow}>
@@ -142,8 +177,8 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
                 </View>
 
                 {/* Added comments */}
-                {subsectionComments.map((comment, idx) => (
-                  <View key={idx} style={styles.commentChip}>
+                {subsectionComments.map((comment, commentIdx) => (
+                  <View key={commentIdx} style={styles.commentChip}>
                     <Text style={styles.commentChipIcon}>✦</Text>
                     <Text style={styles.commentChipText} numberOfLines={2}>
                       {comment.text}
@@ -170,16 +205,54 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         </View>
       </View>
 
-      {/* Section nav bar */}
-      <View style={[styles.sectionNavBar, { paddingBottom: insets.bottom + 28 }]}>
-        <IconButton name="arrow-left" iconColor="#052339" onPress={() => navigation.goBack()} />
-        <View style={styles.sectionPill}>
-          <FontAwesome7Pro name="magnifying-glass" size={14} color="#052339" />
-          <Text style={styles.sectionPillText}>{section.title}</Text>
+      {/* Bottom bar */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
+        <IconButton
+          name="arrow-left"
+          iconColor="#052339"
+          backgroundColor="#eef1f7"
+          borderRadius={16}
+          onPress={() => navigation.goBack()}
+        />
+        <TouchableOpacity
+          style={styles.sectionPill}
+          activeOpacity={0.7}
+          onPress={() => setSectionPickerVisible(true)}
+        >
+          <FontAwesome7Pro name={section.icon} size={16} color="#052339" />
+          <Text style={styles.sectionPillText} numberOfLines={1}>{section.title}</Text>
+        </TouchableOpacity>
+
+        <View style={styles.navGroup}>
+          <TouchableOpacity
+            style={[styles.navButton, !hasPrevSection && styles.navButtonDisabled]}
+            activeOpacity={0.7}
+            onPress={handlePrevSection}
+            disabled={!hasPrevSection}
+          >
+            <FontAwesome7Pro name="chevron-left" size={16} color="#052339" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.navButton, !hasNextSection && styles.navButtonDisabled]}
+            activeOpacity={0.7}
+            onPress={handleNextSection}
+            disabled={!hasNextSection}
+          >
+            <FontAwesome7Pro name="chevron-right" size={16} color="#052339" />
+          </TouchableOpacity>
         </View>
-        <IconButton name="chevron-left" iconColor="#052339" />
-        <IconButton name="chevron-right" iconColor="#052339" />
       </View>
+
+      {/* Section picker */}
+      <SectionPickerModal
+        visible={sectionPickerVisible}
+        currentSectionId={sectionId}
+        onSelect={handleSectionSelect}
+        onClose={() => setSectionPickerVisible(false)}
+      />
+
+      {/* Coachmark — shown on first input added, points at sparkles button */}
+      <CoachmarkOverlay />
 
       {/* Audio recording sheet */}
       <AudioBottomSheet
@@ -335,29 +408,45 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     fontWeight: '500',
   },
-  sectionNavBar: {
+  bottomBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: '#e8eaed',
     backgroundColor: '#ffffff',
   },
   sectionPill: {
     flex: 1,
     height: 48,
     backgroundColor: '#eef1f7',
-    borderRadius: 100,
-    paddingHorizontal: 16,
+    borderRadius: 16,
+    paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   sectionPillText: {
+    flex: 1,
     fontSize: 15,
     fontWeight: '500',
     color: '#052339',
+  },
+  navGroup: {
+    flexDirection: 'row',
+    backgroundColor: '#eef1f7',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  navButton: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navButtonDisabled: {
+    opacity: 0.35,
   },
 });

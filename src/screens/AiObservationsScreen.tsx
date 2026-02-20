@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconButton } from '../components/IconButton';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
+import { ProcessedBanner } from '../components/ProcessedBanner';
 import { AudioBottomSheet } from '../components/AudioBottomSheet';
 import { useAiQueue, AiCollection } from '../context/AiQueueContext';
 
@@ -150,6 +151,8 @@ export function AiObservationsScreen({ navigation }: AiObservationsScreenProps) 
           backgroundColor="rgba(0,0,0,0.05)"
         />
       </View>
+
+      <ProcessedBanner />
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {allSectionIds.map(sectionId => {

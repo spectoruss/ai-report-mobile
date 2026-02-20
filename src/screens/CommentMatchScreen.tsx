@@ -2,37 +2,29 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconButton } from '../components/IconButton';
-import { ProcessedBanner } from '../components/ProcessedBanner';
-import { useAiQueue } from '../context/AiQueueContext';
 
-interface CollectionDetailScreenProps {
+interface CommentMatchScreenProps {
   navigation: any;
-  route: { params: { collectionId: string } };
 }
 
-export function CollectionDetailScreen({ navigation, route }: CollectionDetailScreenProps) {
+export function CommentMatchScreen({ navigation }: CommentMatchScreenProps) {
   const insets = useSafeAreaInsets();
-  const { queue } = useAiQueue();
-  const collection = queue.find(c => c.id === route.params.collectionId);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <IconButton
-          name="arrow-left"
+          name="xmark"
           iconColor="#052339"
+          backgroundColor="rgba(0,0,0,0.05)"
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.title} numberOfLines={1}>
-          {collection?.subsectionTitle ?? 'Collection'}
-        </Text>
+        <Text style={styles.headerTitle}>Comment Match</Text>
         <View style={{ width: 48 }} />
       </View>
 
-      <ProcessedBanner />
-
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>Collection detail coming soon</Text>
+      <View style={styles.empty}>
+        <Text style={styles.emptyText}>Coming soon</Text>
       </View>
     </View>
   );
@@ -50,19 +42,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  title: {
+  headerTitle: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
     color: '#052339',
+    textAlign: 'center',
   },
-  placeholder: {
+  empty: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  placeholderText: {
-    fontSize: 15,
-    color: '#647382',
+  emptyText: {
+    fontSize: 16,
+    color: '#9ca3af',
   },
 });

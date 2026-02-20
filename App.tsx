@@ -10,15 +10,20 @@ import { SectionDetailScreen } from './src/screens/SectionDetailScreen';
 import { ToolbarConfigScreen } from './src/screens/ToolbarConfigScreen';
 import { AiObservationsScreen } from './src/screens/AiObservationsScreen';
 import { CollectionDetailScreen } from './src/screens/CollectionDetailScreen';
+import { ItemDetailScreen } from './src/screens/ItemDetailScreen';
+import { CommentMatchScreen } from './src/screens/CommentMatchScreen';
 import { ToolbarProvider } from './src/context/ToolbarContext';
 import { AiQueueProvider } from './src/context/AiQueueContext';
+import { navigationRef } from './src/navigation/navigationRef';
 
 export type RootStackParamList = {
   Home: undefined;
   SectionDetail: { sectionId: string };
+  ItemDetail: { sectionId: string; subsectionId: string };
   ToolbarConfig: undefined;
   AiObservations: undefined;
   CollectionDetail: { collectionId: string };
+  CommentMatch: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -35,10 +40,11 @@ export default function App() {
       <SafeAreaProvider>
         <ToolbarProvider>
           <AiQueueProvider>
-            <NavigationContainer>
+            <NavigationContainer ref={navigationRef}>
               <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="SectionDetail" component={SectionDetailScreen} />
+                <Stack.Screen name="ItemDetail" component={ItemDetailScreen} />
                 <Stack.Screen name="ToolbarConfig" component={ToolbarConfigScreen} />
                 <Stack.Screen
                   name="AiObservations"
@@ -46,6 +52,11 @@ export default function App() {
                   options={{ presentation: 'modal' }}
                 />
                 <Stack.Screen name="CollectionDetail" component={CollectionDetailScreen} />
+                <Stack.Screen
+                  name="CommentMatch"
+                  component={CommentMatchScreen}
+                  options={{ presentation: 'modal' }}
+                />
               </Stack.Navigator>
             </NavigationContainer>
           </AiQueueProvider>
