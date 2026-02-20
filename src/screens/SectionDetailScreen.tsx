@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_SECTIONS, Rating, Comment } from '../data/mockData'; // Comment kept for future use
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
@@ -99,6 +100,49 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
     });
     pendingTranscript.current = '';
     setAttachMediaVisible(false);
+  }
+
+  async function handleOpenGallery() {
+    setAttachMediaVisible(false);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+    const subsection = section.subsections.find(ss => ss.id === activeSubsectionId);
+    const photos = result.canceled ? [] : result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` }));
+    addToQueue({
+      id: Date.now().toString(),
+      sectionId: section.id,
+      sectionTitle: section.title,
+      subsectionId: activeSubsectionId ?? section.subsections[0].id,
+      subsectionTitle: subsection?.title ?? '',
+      timestamp: new Date(),
+      audio: pendingTranscript.current ? { transcript: pendingTranscript.current } : null,
+      photos,
+    });
+    pendingTranscript.current = '';
+  }
+
+  async function handleTakePhotos() {
+    setAttachMediaVisible(false);
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    const subsection = section.subsections.find(ss => ss.id === activeSubsectionId);
+    const photos = result.canceled ? [] : result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` }));
+    addToQueue({
+      id: Date.now().toString(),
+      sectionId: section.id,
+      sectionTitle: section.title,
+      subsectionId: activeSubsectionId ?? section.subsections[0].id,
+      subsectionTitle: subsection?.title ?? '',
+      timestamp: new Date(),
+      audio: pendingTranscript.current ? { transcript: pendingTranscript.current } : null,
+      photos,
+    });
+    pendingTranscript.current = '';
   }
 
   function handlePrevSection() {
@@ -275,8 +319,8 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         onClose={() => setAttachMediaVisible(false)}
       >
         <AttachMediaSheet
-          onOpenGallery={() => setAttachMediaVisible(false)}
-          onTakePhotos={() => setAttachMediaVisible(false)}
+          onOpenGallery={handleOpenGallery}
+          onTakePhotos={handleTakePhotos}
           onNotNow={handleNotNow}
         />
       </AppBottomSheet>
