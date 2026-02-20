@@ -13,18 +13,11 @@ interface CaptureActionBarProps {
 
 export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress }: CaptureActionBarProps) {
   const { handedness, visibility } = useToolbar();
-  const isLeft = handedness === 'left';
+  // Right-handed: dominant hand on right → utilities on left (out of the way)
+  // Left-handed: dominant hand on left → utilities on right
+  const utilitiesOnLeft = handedness === 'right';
 
   const hasAnyUtility = visibility.torch || visibility.cya;
-
-  const utilities = hasAnyUtility ? (
-    <View style={styles.sideGroup}>
-      {visibility.torch && <IconButton name="bolt" iconColor="#09334b" backgroundColor="transparent" />}
-      {visibility.cya && <IconButton name="aperture" iconColor="#09334b" backgroundColor="transparent" />}
-    </View>
-  ) : (
-    <View style={styles.placeholder} />
-  );
 
   return (
     <LinearGradient
@@ -34,7 +27,7 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress }: 
       end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      {isLeft ? utilities : <View style={styles.placeholder} />}
+      {/* Pill — perfectly centered */}
       <CaptureAiPill
         onCameraPress={onCameraAiPress}
         onMicPress={onMicPress}
@@ -43,26 +36,41 @@ export function CaptureActionBar({ onMicPress, onCameraAiPress, onPhotoPress }: 
         showMic={visibility.audio}
         showPhoto={visibility.gallery}
       />
-      {isLeft ? <View style={styles.placeholder} /> : utilities}
+
+      {/* Utilities — 16px from the appropriate edge */}
+      {hasAnyUtility && (
+        <View style={[styles.utilities, utilitiesOnLeft ? styles.utilitiesLeft : styles.utilitiesRight]}>
+          <View style={styles.sideGroup}>
+            {visibility.torch && <IconButton name="bolt" iconColor="#09334b" backgroundColor="transparent" />}
+            {visibility.cya && <IconButton name="aperture" iconColor="#09334b" backgroundColor="transparent" />}
+          </View>
+        </View>
+      )}
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 16,
+  },
+  utilities: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  utilitiesLeft: {
+    left: 16,
+  },
+  utilitiesRight: {
+    right: 16,
   },
   sideGroup: {
     flexDirection: 'row',
     backgroundColor: '#eef1f7',
     borderRadius: 100,
-  },
-  placeholder: {
-    width: 48,
   },
 });
