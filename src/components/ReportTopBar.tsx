@@ -114,7 +114,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#09334b',
     paddingVertical: 0,
-  },
+    outlineWidth: 0,
+  } as any,
   badge: {
     position: 'absolute',
     top: -4,
