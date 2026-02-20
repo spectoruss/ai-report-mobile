@@ -4,6 +4,12 @@ import { FontAwesome7Pro } from './FontAwesome7Pro';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+interface CoachmarkItem {
+  iconName: string;
+  description: string;
+  iconColor?: string;
+}
+
 interface CoachmarkOverlayProps {
   show: boolean;
   onDismiss: () => void;
@@ -12,9 +18,7 @@ interface CoachmarkOverlayProps {
   bottomOffset?: number;
   caretRight?: number;
   title: string;
-  description: string;
-  iconName: string;
-  iconColor?: string;
+  items: CoachmarkItem[];
 }
 
 export function CoachmarkOverlay({
@@ -25,9 +29,7 @@ export function CoachmarkOverlay({
   bottomOffset = 80,
   caretRight = 67,
   title,
-  description,
-  iconName,
-  iconColor = '#5cff9d',
+  items,
 }: CoachmarkOverlayProps) {
   const translateX = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
@@ -74,14 +76,16 @@ export function CoachmarkOverlay({
             <Text style={styles.title}>{title}</Text>
           </View>
 
-          <View style={styles.row}>
-            <View style={styles.iconOuter}>
-              <View style={styles.iconInner}>
-                <FontAwesome7Pro name={iconName} size={12} color={iconColor} />
+          {items.map((item, index) => (
+            <View key={index} style={styles.row}>
+              <View style={styles.iconOuter}>
+                <View style={styles.iconInner}>
+                  <FontAwesome7Pro name={item.iconName} size={12} color={item.iconColor ?? '#5cff9d'} />
+                </View>
               </View>
+              <Text style={styles.description}>{item.description}</Text>
             </View>
-            <Text style={styles.description}>{description}</Text>
-          </View>
+          ))}
 
           <TouchableOpacity
             style={styles.nextButton}

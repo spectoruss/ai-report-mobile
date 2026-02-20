@@ -188,16 +188,18 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
         onClose={() => setSectionPickerVisible(false)}
       />
 
-      {/* Coachmark — press & hold nav arrows to jump sections */}
+      {/* Coachmark — explain tap vs press & hold on nav arrows */}
       <CoachmarkOverlay
         show={showItemCoachmark}
         onDismiss={dismissItemCoachmark}
         variant="bottom"
         bottomOffset={insets.bottom + 73}
         caretRight={40}
-        title="Press & hold to jump sections"
-        description="Long press either arrow to skip to the previous or next section"
-        iconName="hand"
+        title="Using the arrows"
+        items={[
+          { iconName: 'arrow-pointer', description: 'Tap to move to the next or previous item' },
+          { iconName: 'hand', description: 'Press & hold to jump to a different section' },
+        ]}
       />
     </View>
   );

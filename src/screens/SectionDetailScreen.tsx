@@ -257,8 +257,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         onDismiss={dismissCoachmark}
         topOffset={insets.top + 72}
         title="You've added an input to the Ai Queue!"
-        description="Go back to the queue when ready to process"
-        iconName="arrow-pointer"
+        items={[{ iconName: 'arrow-pointer', description: 'Go back to the queue when ready to process' }]}
       />
 
       {/* Audio recording sheet */}
