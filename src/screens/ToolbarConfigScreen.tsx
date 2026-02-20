@@ -20,12 +20,14 @@ interface ToolbarConfigScreenProps {
 }
 
 const ITEM_HEIGHT = 48;
+type LayoutMode = 'right' | 'left';
 
 interface ToolbarItem {
   id: string;
   label: string;
   icon: string;
   visible: boolean;
+  locked?: boolean;
 }
 
 const INITIAL_UTILITIES: ToolbarItem[] = [
@@ -35,11 +37,48 @@ const INITIAL_UTILITIES: ToolbarItem[] = [
 
 const INITIAL_AI: ToolbarItem[] = [
   { id: 'gallery', label: 'Gallery Input', icon: 'images', visible: true },
-  { id: 'audio', label: 'Audio Input', icon: 'microphone', visible: true },
+  { id: 'audio', label: 'Audio Input', icon: 'microphone', visible: true, locked: true },
   { id: 'camera', label: 'Camera Input', icon: 'camera', visible: true },
 ];
 
-// ─── DraggableRow ────────────────────────────────────────────────────────────
+// ─── Layout Card ──────────────────────────────────────────────────────────────
+
+interface LayoutCardProps {
+  label: string;
+  mode: LayoutMode;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+function LayoutCard({ label, mode, selected, onSelect }: LayoutCardProps) {
+  return (
+    <TouchableOpacity
+      style={[styles.layoutCard, selected && styles.layoutCardSelected]}
+      onPress={onSelect}
+      activeOpacity={0.7}
+    >
+      <View style={styles.layoutPreview} />
+      <View style={styles.layoutBarRow}>
+        {mode === 'right' ? (
+          <>
+            <View style={styles.layoutBarDot} />
+            <View style={styles.layoutBarCenter} />
+          </>
+        ) : (
+          <>
+            <View style={styles.layoutBarCenter} />
+            <View style={styles.layoutBarDot} />
+          </>
+        )}
+      </View>
+      <View style={styles.layoutLabelRow}>
+        <Text style={styles.layoutLabel}>{label}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+// ─── DraggableRow ─────────────────────────────────────────────────────────────
 
 interface DraggableRowProps {
   item: ToolbarItem;
@@ -67,19 +106,9 @@ function DraggableRow({
   const gesture = Gesture.Pan()
     .activateAfterLongPress(300)
     .runOnJS(true)
-    .onStart(() => {
-      onDragStart(index);
-    })
-    .onUpdate(e => {
-      if (draggingIndex.value === index) {
-        dragY.value = e.translationY;
-      }
-    })
-    .onEnd(e => {
-      if (draggingIndex.value === index) {
-        onDragEnd(index, e.translationY);
-      }
-    })
+    .onStart(() => { onDragStart(index); })
+    .onUpdate(e => { if (draggingIndex.value === index) dragY.value = e.translationY; })
+    .onEnd(e => { if (draggingIndex.value === index) onDragEnd(index, e.translationY); })
     .onFinalize(() => {
       if (draggingIndex.value === index) {
         draggingIndex.value = -1;
@@ -106,14 +135,8 @@ function DraggableRow({
     if (active < 0) return {};
 
     const target = Math.max(0, Math.min(total - 1, Math.round(active + dy / ITEM_HEIGHT)));
-
-    if (active < target && index > active && index <= target) {
-      return { transform: [{ translateY: -ITEM_HEIGHT }] };
-    }
-    if (active > target && index >= target && index < active) {
-      return { transform: [{ translateY: ITEM_HEIGHT }] };
-    }
-
+    if (active < target && index > active && index <= target) return { transform: [{ translateY: -ITEM_HEIGHT }] };
+    if (active > target && index >= target && index < active) return { transform: [{ translateY: ITEM_HEIGHT }] };
     return {};
   });
 
@@ -124,11 +147,15 @@ function DraggableRow({
           <FontAwesome7Pro name={item.icon} size={18} color="#09334b" />
         </View>
         <Text style={styles.rowLabel}>{item.label}</Text>
-        <TouchableOpacity style={styles.rowIconBtn} onPress={onToggle} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.rowIconBtn}
+          onPress={item.locked ? undefined : onToggle}
+          activeOpacity={item.locked ? 1 : 0.7}
+        >
           <FontAwesome7Pro
-            name={item.visible ? 'eye' : 'eye-slash'}
+            name={item.locked ? 'lock' : (item.visible ? 'eye' : 'eye-slash')}
             size={16}
-            color="#4e5e72"
+            color={item.locked ? '#9ca3af' : '#4e5e72'}
           />
         </TouchableOpacity>
         <GestureDetector gesture={gesture}>
@@ -161,10 +188,7 @@ function SortableList({ items, onReorder, onToggle, isAi = false }: SortableList
   }
 
   function handleDragEnd(fromIndex: number, dy: number) {
-    const toIndex = Math.max(
-      0,
-      Math.min(items.length - 1, fromIndex + Math.round(dy / ITEM_HEIGHT))
-    );
+    const toIndex = Math.max(0, Math.min(items.length - 1, fromIndex + Math.round(dy / ITEM_HEIGHT)));
     draggingIndex.value = -1;
     dragY.value = 0;
     if (toIndex !== fromIndex) {
@@ -211,21 +235,30 @@ function SortableList({ items, onReorder, onToggle, isAi = false }: SortableList
 export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
   const insets = useSafeAreaInsets();
   const { visibility, setVisibility, resetVisibility } = useToolbar();
-
-  // Order is local; visibility is derived from context
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('right');
   const [utilityOrder, setUtilityOrder] = useState<ToolbarItem[]>(INITIAL_UTILITIES);
   const [aiOrder, setAiOrder] = useState<ToolbarItem[]>(INITIAL_AI);
 
-  const utilityItems = utilityOrder.map(item => ({ ...item, visible: visibility[item.id as ToolbarItemId] }));
-  const aiItems = aiOrder.map(item => ({ ...item, visible: visibility[item.id as ToolbarItemId] }));
+  const utilityItems = utilityOrder.map(item => ({
+    ...item,
+    visible: visibility[item.id as ToolbarItemId],
+  }));
+  const aiItems = aiOrder.map(item => ({
+    ...item,
+    visible: visibility[item.id as ToolbarItemId],
+    locked: item.locked,
+  }));
 
   function toggle(id: string) {
+    const all = [...utilityOrder, ...aiOrder];
+    if (all.find(i => i.id === id)?.locked) return;
     setVisibility(id as ToolbarItemId, !visibility[id as ToolbarItemId]);
   }
 
   function handleReset() {
     setUtilityOrder(INITIAL_UTILITIES);
     setAiOrder(INITIAL_AI);
+    setLayoutMode('right');
     resetVisibility();
   }
 
@@ -253,22 +286,33 @@ export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
         <Text style={styles.title}>Toolbar Configuration</Text>
         <Text style={styles.subtitle}>Arrange the toolbar so that it fits your needs</Text>
 
-        {/* Utilities */}
-        <SectionHeader label="UTILITIES" />
-        <SortableList
-          items={utilityItems}
-          onReorder={setUtilityOrder}
-          onToggle={toggle}
-        />
+        {/* Layout */}
+        <Text style={styles.sectionTitle}>Layout</Text>
+        <View style={styles.layoutCards}>
+          <LayoutCard
+            label="Right"
+            mode="right"
+            selected={layoutMode === 'right'}
+            onSelect={() => setLayoutMode('right')}
+          />
+          <LayoutCard
+            label="Left"
+            mode="left"
+            selected={layoutMode === 'left'}
+            onSelect={() => setLayoutMode('left')}
+          />
+        </View>
 
-        {/* AI Toolbar */}
-        <SectionHeader label="AI TOOLBAR" />
-        <SortableList
-          items={aiItems}
-          onReorder={setAiOrder}
-          onToggle={toggle}
-          isAi
-        />
+        <View style={styles.sectionDivider} />
+
+        {/* Toolbar Options */}
+        <Text style={styles.sectionTitle}>Toolbar Options</Text>
+
+        <Text style={styles.subheading}>Utilities</Text>
+        <SortableList items={utilityItems} onReorder={setUtilityOrder} onToggle={toggle} />
+
+        <Text style={styles.subheading}>Ai Toolbar</Text>
+        <SortableList items={aiItems} onReorder={setAiOrder} onToggle={toggle} isAi />
       </ScrollView>
 
       {/* FAB */}
@@ -276,19 +320,6 @@ export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
         <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => navigation.goBack()}>
           <FontAwesome7Pro name="check" size={22} color="#ffffff" />
         </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-function SectionHeader({ label }: { label: string }) {
-  return (
-    <View style={styles.sectionHeaderRow}>
-      <Text style={styles.sectionLabel}>{label}</Text>
-      <View style={styles.sectionHeaderRight}>
-        <View style={styles.sectionIconBtn}>
-          <FontAwesome6 name="grip-lines" size={14} color="#4e5e72" />
-        </View>
       </View>
     </View>
   );
@@ -332,31 +363,83 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginBottom: 4,
   },
-  sectionHeaderRow: {
+  // Layout section
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#212731',
+    lineHeight: 24,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  layoutCards: {
+    flexDirection: 'row',
+    gap: 11,
+    paddingVertical: 8,
+  },
+  layoutCard: {
+    width: 116,
+    height: 160,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  layoutCardSelected: {
+    borderColor: '#052339',
+  },
+  layoutPreview: {
+    flex: 1,
+    backgroundColor: '#dae3e7',
+    borderRadius: 6,
+  },
+  layoutBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingRight: 6,
-    marginTop: 8,
+    gap: 6,
+    height: 10,
   },
-  sectionLabel: {
+  layoutBarDot: {
+    width: 20,
+    height: 10,
+    borderRadius: 100,
+    backgroundColor: '#dae3e7',
+  },
+  layoutBarCenter: {
     flex: 1,
+    height: 10,
+    borderRadius: 100,
+    backgroundColor: '#0779ac',
+  },
+  layoutLabelRow: {
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  layoutLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#212731',
+    textAlign: 'center',
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  // Toolbar Options
+  subheading: {
     fontSize: 11,
     fontWeight: '400',
     color: '#647382',
     letterSpacing: 1,
     textTransform: 'uppercase',
     lineHeight: 24,
-  },
-  sectionHeaderRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionIconBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 8,
   },
   group: {
     borderRadius: 16,
