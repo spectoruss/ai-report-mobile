@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
 } from 'react-native';
+import { FontAwesome6 } from '@expo/vector-icons';
 
 interface AudioBottomSheetProps {
   visible: boolean;
@@ -91,11 +92,8 @@ export function AudioBottomSheet({ visible, onCancel, onConfirm, inputType = 'mi
   }
 
   function handleConfirm() {
-    setIsProcessing(true);
     const transcript = MOCK_TRANSCRIPTS[Math.floor(Math.random() * MOCK_TRANSCRIPTS.length)];
-    setTimeout(() => {
-      onConfirm(transcript);
-    }, 1500);
+    onConfirm(transcript);
   }
 
   const label = inputType === 'mic' ? 'Recording...' : inputType === 'camera' ? 'Processing image...' : 'Analyzing photo...';
@@ -113,7 +111,7 @@ export function AudioBottomSheet({ visible, onCancel, onConfirm, inputType = 'mi
           <View style={styles.row}>
             {/* Cancel */}
             <TouchableOpacity style={styles.cancelButton} onPress={onCancel} disabled={isProcessing}>
-              <Text style={styles.cancelIcon}>✕</Text>
+              <FontAwesome6 name="xmark" size={16} color="#ffffff" />
             </TouchableOpacity>
 
             {/* Center — waveform + timer */}
@@ -158,7 +156,7 @@ export function AudioBottomSheet({ visible, onCancel, onConfirm, inputType = 'mi
               onPress={handleConfirm}
               disabled={isProcessing}
             >
-              <Text style={styles.confirmIcon}>✓</Text>
+              <FontAwesome6 name="check" size={20} color="#052339" />
             </TouchableOpacity>
           </View>
 
@@ -199,11 +197,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  cancelIcon: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   center: {
     flex: 1,
@@ -254,11 +247,6 @@ const styles = StyleSheet.create({
   },
   confirmDisabled: {
     opacity: 0.5,
-  },
-  confirmIcon: {
-    color: '#052339',
-    fontSize: 20,
-    fontWeight: '700',
   },
   homeIndicator: {
     alignSelf: 'center',

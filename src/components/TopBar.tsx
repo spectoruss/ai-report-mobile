@@ -1,14 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IconButton } from './IconButton';
 
 interface TopBarProps {
   title: string;
   onBack?: () => void;
-  rightIcon?: React.ReactNode;
+  rightIconName?: string;
+  onRightPress?: () => void;
 }
 
-export function TopBar({ title, onBack, rightIcon }: TopBarProps) {
+export function TopBar({ title, onBack, rightIconName = 'cloud-arrow-up', onRightPress }: TopBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
@@ -25,19 +27,18 @@ export function TopBar({ title, onBack, rightIcon }: TopBarProps) {
 
       {/* Title row */}
       <View style={styles.titleRow}>
-        {onBack ? (
-          <TouchableOpacity style={styles.iconButton} onPress={onBack}>
-            <Text style={styles.iconButtonText}>←</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.iconButton} />
-        )}
+        <IconButton
+          name={onBack ? 'arrow-left' : 'arrow-left'}
+          onPress={onBack}
+          iconColor="#052339"
+          style={onBack ? undefined : styles.invisible}
+        />
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        {rightIcon ? (
-          <View style={styles.iconButton}>{rightIcon}</View>
-        ) : (
-          <View style={styles.iconButton} />
-        )}
+        <IconButton
+          name={rightIconName}
+          onPress={onRightPress}
+          iconColor="#052339"
+        />
       </View>
     </View>
   );
@@ -85,24 +86,14 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 8,
   },
-  iconButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#eef1f7',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonText: {
-    fontSize: 20,
-    color: '#052339',
-    fontWeight: '600',
-  },
   title: {
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
     color: '#052339',
     textAlign: 'center',
+  },
+  invisible: {
+    opacity: 0,
   },
 });

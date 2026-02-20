@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { FontAwesome6 } from '@expo/vector-icons';
 import { Comment } from '../data/mockData';
 
 interface MatchedCommentBannerProps {
@@ -36,7 +37,7 @@ export function MatchedCommentBanner({ comment, onAccept, onDismiss }: MatchedCo
         <Text style={styles.headerIcon}>✦</Text>
         <Text style={styles.headerText}>AI matched a comment</Text>
         <TouchableOpacity onPress={onDismiss}>
-          <Text style={styles.dismissText}>✕</Text>
+          <FontAwesome6 name="xmark" size={14} color="#ffffff" />
         </TouchableOpacity>
       </View>
       <Text style={styles.commentText} numberOfLines={3}>{comment.text}</Text>
@@ -78,11 +79,6 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  dismissText: {
-    color: '#ffffff',
-    fontSize: 14,
-    opacity: 0.5,
   },
   commentText: {
     color: '#ffffff',

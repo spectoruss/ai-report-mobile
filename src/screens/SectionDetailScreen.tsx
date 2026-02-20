@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,15 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { REPORT_SECTIONS, Rating, Comment, mockAiMatch } from '../data/mockData';
+import { REPORT_SECTIONS, Rating, Comment } from '../data/mockData'; // Comment kept for future use
+import { IconButton } from '../components/IconButton';
+import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
+import { ReportTopBar } from '../components/ReportTopBar';
 import { CaptureActionBar } from '../components/CaptureActionBar';
 import { AudioBottomSheet } from '../components/AudioBottomSheet';
-import { MatchedCommentBanner } from '../components/MatchedCommentBanner';
+import { AppBottomSheet } from '../components/AppBottomSheet';
+import { AttachMediaSheet } from '../components/AttachMediaSheet';
+import { useAiQueue } from '../context/AiQueueContext';
 
 interface SectionDetailScreenProps {
   navigation: any;
@@ -41,9 +46,11 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
   });
 
   const [audioSheetVisible, setAudioSheetVisible] = useState(false);
+  const [attachMediaVisible, setAttachMediaVisible] = useState(false);
   const [inputType, setInputType] = useState<InputType>('mic');
-  const [matchedComment, setMatchedComment] = useState<Comment | null>(null);
   const [activeSubsectionId, setActiveSubsectionId] = useState<string | null>(null);
+  const pendingTranscript = useRef<string>('');
+  const { addToQueue } = useAiQueue();
 
   function setRating(subsectionId: string, rating: Rating) {
     setRatings(prev => ({ ...prev, [subsectionId]: rating }));
@@ -56,19 +63,26 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
   }
 
   function handleAudioConfirm(transcript: string) {
+    pendingTranscript.current = transcript;
     setAudioSheetVisible(false);
-    const matched = mockAiMatch(transcript);
-    setMatchedComment(matched);
+    setAttachMediaVisible(true);
   }
 
-  function handleAcceptComment(comment: Comment) {
-    if (activeSubsectionId) {
-      setComments(prev => ({
-        ...prev,
-        [activeSubsectionId]: [...(prev[activeSubsectionId] || []), comment],
-      }));
-    }
-    setMatchedComment(null);
+  function handleNotNow() {
+    const subsection = section.subsections.find(ss => ss.id === activeSubsectionId);
+    const isAudio = inputType === 'mic';
+    addToQueue({
+      id: Date.now().toString(),
+      sectionId: section.id,
+      sectionTitle: section.title,
+      subsectionId: activeSubsectionId ?? section.subsections[0].id,
+      subsectionTitle: subsection?.title ?? '',
+      timestamp: new Date(),
+      audio: isAudio ? { transcript: pendingTranscript.current } : null,
+      photos: !isAudio ? [{ id: `photo-${Date.now()}` }] : [],
+    });
+    pendingTranscript.current = '';
+    setAttachMediaVisible(false);
   }
 
   return (
@@ -80,112 +94,91 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         <Text style={styles.statusIcons}>▲ ■</Text>
       </View>
 
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.iconText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>Residential Report</Text>
-        <TouchableOpacity style={styles.iconButton}>
-          <Text style={styles.syncIcon}>↑☁</Text>
-        </TouchableOpacity>
-      </View>
+      <ReportTopBar navigation={navigation} />
 
-      {/* Section content */}
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        {section.subsections.map(subsection => {
-          const currentRating = ratings[subsection.id];
-          const subsectionComments = comments[subsection.id] || [];
+      {/* Scroll area + floating action bar */}
+      <View style={styles.scrollWrapper}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          {section.subsections.map(subsection => {
+            const currentRating = ratings[subsection.id];
+            const subsectionComments = comments[subsection.id] || [];
 
-          return (
-            <View key={subsection.id}>
-              {/* Subsection row */}
-              <TouchableOpacity
-                style={styles.subsectionRow}
-                onPress={() => openInput('mic', subsection.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.subsectionLeft}>
-                  <View style={styles.checkCircle} />
+            return (
+              <View key={subsection.id}>
+                {/* Subsection row */}
+                <View style={styles.subsectionRow}>
+                  <View style={styles.subsectionLeft}>
+                    <View style={styles.checkCircle} />
+                  </View>
+                  <Text style={styles.subsectionTitle} numberOfLines={1}>
+                    {subsection.title}
+                  </Text>
+                  <View style={styles.subsectionRight}>
+                    <FontAwesome7Pro name="chevron-right" size={12} color="#6b7280" />
+                  </View>
                 </View>
-                <Text style={styles.subsectionTitle} numberOfLines={1}>
-                  {subsection.title}
-                </Text>
-                <View style={styles.subsectionRight}>
-                  <Text style={styles.chevron}>›</Text>
-                </View>
-              </TouchableOpacity>
 
-              {/* Rating segmented control */}
-              <View style={styles.ratingRow}>
-                {RATING_LABELS.map(rating => (
-                  <TouchableOpacity
-                    key={rating}
-                    style={[
-                      styles.ratingButton,
-                      currentRating === rating && styles.ratingButtonActive,
-                    ]}
-                    onPress={() => setRating(subsection.id, rating)}
-                  >
-                    <Text
+                {/* Rating segmented control */}
+                <View style={styles.ratingRow}>
+                  {RATING_LABELS.map(rating => (
+                    <TouchableOpacity
+                      key={rating}
                       style={[
-                        styles.ratingText,
-                        currentRating === rating && styles.ratingTextActive,
+                        styles.ratingButton,
+                        currentRating === rating && styles.ratingButtonActive,
                       ]}
+                      onPress={() => setRating(subsection.id, rating)}
                     >
-                      {rating}
+                      <Text
+                        style={[
+                          styles.ratingText,
+                          currentRating === rating && styles.ratingTextActive,
+                        ]}
+                      >
+                        {rating}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Added comments */}
+                {subsectionComments.map((comment, idx) => (
+                  <View key={idx} style={styles.commentChip}>
+                    <Text style={styles.commentChipIcon}>✦</Text>
+                    <Text style={styles.commentChipText} numberOfLines={2}>
+                      {comment.text}
                     </Text>
-                  </TouchableOpacity>
+                  </View>
                 ))}
               </View>
+            );
+          })}
 
-              {/* Added comments */}
-              {subsectionComments.map((comment, idx) => (
-                <View key={idx} style={styles.commentChip}>
-                  <Text style={styles.commentChipIcon}>✦</Text>
-                  <Text style={styles.commentChipText} numberOfLines={2}>
-                    {comment.text}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          );
-        })}
+          {/* Add Item button */}
+          <TouchableOpacity style={styles.addItemButton}>
+            <Text style={styles.addItemText}>+ Add Item</Text>
+          </TouchableOpacity>
+        </ScrollView>
 
-        {/* Add Item button */}
-        <TouchableOpacity style={styles.addItemButton}>
-          <Text style={styles.addItemText}>+ Add Item</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* AI matched comment banner */}
-      <MatchedCommentBanner
-        comment={matchedComment}
-        onAccept={handleAcceptComment}
-        onDismiss={() => setMatchedComment(null)}
-      />
-
-      {/* Bottom action bar */}
-      <CaptureActionBar
-        onMicPress={() => openInput('mic')}
-        onCameraAiPress={() => openInput('camera')}
-        onPhotoPress={() => openInput('photo')}
-      />
+        {/* Floating action bar */}
+        <View style={styles.floatingBar}>
+          <CaptureActionBar
+            onMicPress={() => openInput('mic')}
+            onCameraAiPress={() => openInput('camera')}
+            onPhotoPress={() => openInput('photo')}
+          />
+        </View>
+      </View>
 
       {/* Section nav bar */}
-      <View style={[styles.sectionNavBar, { paddingBottom: insets.bottom + 4 }]}>
-        <TouchableOpacity style={styles.searchBtn}>
-          <Text style={styles.searchIcon}>⌕</Text>
-        </TouchableOpacity>
+      <View style={[styles.sectionNavBar, { paddingBottom: insets.bottom + 28 }]}>
+        <IconButton name="arrow-left" iconColor="#052339" onPress={() => navigation.goBack()} />
         <View style={styles.sectionPill}>
-          <Text style={styles.sectionPillText}>≡ {section.title}</Text>
+          <FontAwesome7Pro name="magnifying-glass" size={14} color="#052339" />
+          <Text style={styles.sectionPillText}>{section.title}</Text>
         </View>
-        <TouchableOpacity style={styles.navArrow}>
-          <Text style={styles.navArrowText}>∧</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navArrow}>
-          <Text style={styles.navArrowText}>∨</Text>
-        </TouchableOpacity>
+        <IconButton name="chevron-left" iconColor="#052339" />
+        <IconButton name="chevron-right" iconColor="#052339" />
       </View>
 
       {/* Audio recording sheet */}
@@ -195,13 +188,25 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         onConfirm={handleAudioConfirm}
         inputType={inputType}
       />
+
+      {/* Attach media sheet */}
+      <AppBottomSheet
+        visible={attachMediaVisible}
+        onClose={() => setAttachMediaVisible(false)}
+      >
+        <AttachMediaSheet
+          onOpenGallery={() => setAttachMediaVisible(false)}
+          onTakePhotos={() => setAttachMediaVisible(false)}
+          onNotNow={handleNotNow}
+        />
+      </AppBottomSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
   },
   statusBar: {
@@ -219,32 +224,15 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   statusIcons: { fontSize: 11, color: '#1f2937' },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  iconButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#eef1f7',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: { fontSize: 20, color: '#052339', fontWeight: '600' },
-  syncIcon: { fontSize: 14, color: '#052339' },
-  topTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#052339',
-    textAlign: 'center',
-  },
+  scrollWrapper: { flex: 1 },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 8 },
+  scrollContent: { paddingBottom: 96 },
+  floatingBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
   subsectionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -279,7 +267,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chevron: { fontSize: 22, color: '#6b7280', fontWeight: '300' },
   ratingRow: {
     flexDirection: 'row',
     marginHorizontal: 12,
@@ -358,35 +345,19 @@ const styles = StyleSheet.create({
     borderTopColor: '#e5e7eb',
     backgroundColor: '#ffffff',
   },
-  searchBtn: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#eef1f7',
-    borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  searchIcon: { fontSize: 20, color: '#09334b' },
   sectionPill: {
     flex: 1,
     height: 48,
     backgroundColor: '#eef1f7',
     borderRadius: 100,
     paddingHorizontal: 16,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   sectionPillText: {
     fontSize: 15,
     fontWeight: '500',
     color: '#052339',
   },
-  navArrow: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#eef1f7',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navArrowText: { fontSize: 18, color: '#052339', fontWeight: '600' },
 });

@@ -1,14 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Image,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FontAwesome6 } from '@expo/vector-icons';
 import { REPORT_SECTIONS, Section } from '../data/mockData';
+import { IconButton } from '../components/IconButton';
+import { ReportTopBar } from '../components/ReportTopBar';
 
 interface HomeScreenProps {
   navigation: any;
@@ -30,21 +26,13 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         <Text style={styles.statusIcons}>▲ ■</Text>
       </View>
 
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <View style={styles.iconButton}>
-          <Text style={styles.iconText}>←</Text>
-        </View>
-        <Text style={styles.topTitle}>Residential Report</Text>
-        <TouchableOpacity style={styles.iconButton}>
-          <Text style={styles.syncIcon}>↑☁</Text>
-        </TouchableOpacity>
-      </View>
+      <ReportTopBar navigation={navigation} />
 
       {/* Masthead photo */}
       <View style={styles.masthead}>
         <View style={styles.mastheadPlaceholder}>
-          <Text style={styles.mastheadLabel}>🏠 Property Photo</Text>
+          <FontAwesome6 name="house" size={24} color="#9ca3af" />
+          <Text style={styles.mastheadLabel}>Property Photo</Text>
         </View>
       </View>
 
@@ -62,7 +50,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             </View>
             <Text style={styles.listItemText} numberOfLines={1}>{section.title}</Text>
             <View style={styles.listItemRight}>
-              <Text style={styles.chevron}>›</Text>
+              <FontAwesome6 name="chevron-right" size={12} color="#6b7280" />
             </View>
           </TouchableOpacity>
         ))}
@@ -70,33 +58,10 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
       {/* Bottom action bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-        {/* Left — flashlight + camera */}
         <View style={styles.sideGroup}>
-          <TouchableOpacity style={styles.sideBtn}>
-            <Text style={styles.sideIcon}>⚡</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sideBtn}>
-            <Text style={styles.sideIcon}>◎</Text>
-          </TouchableOpacity>
+          <IconButton name="bolt" iconColor="#09334b" backgroundColor="transparent" />
+          <IconButton name="aperture" iconColor="#09334b" backgroundColor="transparent" />
         </View>
-
-        {/* Center — blue AI pill */}
-        <View style={styles.primaryPill}>
-          <TouchableOpacity style={styles.pillBtn}>
-            <Text style={styles.pillIcon}>📷✦</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.pillBtn}>
-            <Text style={styles.pillIcon}>🎙✦</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.pillBtn}>
-            <Text style={styles.pillIcon}>🖼✦</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Right — more */}
-        <TouchableOpacity style={styles.moreBtn}>
-          <Text style={styles.moreIcon}>•••</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -104,7 +69,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#ffffff',
   },
   statusBar: {
@@ -122,42 +87,18 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
   },
   statusIcons: { fontSize: 11, color: '#1f2937' },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  iconButton: {
-    width: 48,
-    height: 48,
-    backgroundColor: '#eef1f7',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: { fontSize: 20, color: '#052339', fontWeight: '600' },
-  syncIcon: { fontSize: 14, color: '#052339' },
-  topTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#052339',
-    textAlign: 'center',
-  },
   masthead: {
     height: 96,
     backgroundColor: '#e5e7eb',
-    marginBottom: 0,
   },
   mastheadPlaceholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
   },
   mastheadLabel: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#9ca3af',
   },
   list: { flex: 1 },
@@ -172,8 +113,8 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   listItemLeft: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -191,15 +132,10 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   listItemRight: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  chevron: {
-    fontSize: 22,
-    color: '#6b7280',
-    fontWeight: '300',
   },
   bottomBar: {
     flexDirection: 'row',
@@ -213,44 +149,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#eef1f7',
     borderRadius: 100,
-    padding: 4,
-    gap: 2,
-  },
-  sideBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 100,
-  },
-  sideIcon: { fontSize: 16, color: '#09334b' },
-  primaryPill: {
-    flexDirection: 'row',
-    backgroundColor: '#0779ac',
-    borderRadius: 100,
-    padding: 4,
-    gap: 2,
-  },
-  pillBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 100,
-  },
-  pillIcon: { fontSize: 14 },
-  moreBtn: {
-    width: 48,
-    height: 56,
-    backgroundColor: '#eef1f7',
-    borderRadius: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  moreIcon: {
-    fontSize: 12,
-    color: '#09334b',
-    letterSpacing: 1,
-    transform: [{ rotate: '90deg' }],
   },
 });
