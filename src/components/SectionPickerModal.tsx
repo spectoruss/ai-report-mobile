@@ -7,6 +7,8 @@ import {
   Animated,
   StyleSheet,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_SECTIONS } from '../data/mockData';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
@@ -81,7 +83,7 @@ export function SectionPickerModal({
         activeOpacity={1}
       />
 
-      {/* Floating add button — fades in above the panel */}
+      {/* Floating add button — liquid glass circle */}
       <Animated.View
         style={[
           styles.addButtonWrap,
@@ -99,7 +101,13 @@ export function SectionPickerModal({
             onAddSection?.();
           }}
         >
-          <FontAwesome7Pro name="plus" size={16} color="#052339" />
+          {/* Blur layer */}
+          <BlurView intensity={55} tint="light" style={StyleSheet.absoluteFillObject} />
+          {/* Cool glass tint */}
+          <View style={styles.addButtonTint} pointerEvents="none" />
+          {/* Specular ring highlight */}
+          <View style={styles.addButtonSpecular} pointerEvents="none" />
+          <FontAwesome7Pro name="plus" size={16} color="#1a3a52" />
         </TouchableOpacity>
       </Animated.View>
 
@@ -114,6 +122,21 @@ export function SectionPickerModal({
         ]}
       >
         <View style={[styles.panel, { paddingBottom: insets.bottom + 8 }]}>
+          {/* Blur layer — fills entire panel */}
+          <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFillObject} />
+
+          {/* Cool glass tint overlay */}
+          <View style={styles.glassTint} pointerEvents="none" />
+
+          {/* Top-edge specular sheen — catches the light */}
+          <LinearGradient
+            colors={['rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.specular}
+            pointerEvents="none"
+          />
+
           <ScrollView
             style={styles.scroll}
             contentContainerStyle={styles.scrollContent}
@@ -161,7 +184,7 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
 
-  // Floating add button — sits flush at panel top
+  // ── Add button ────────────────────────────────────────────────────────────
   addButtonWrap: {
     position: 'absolute',
     left: PANEL_LEFT,
@@ -172,17 +195,28 @@ const styles = StyleSheet.create({
     width: ADD_BTN_SIZE,
     height: ADD_BTN_SIZE,
     borderRadius: ADD_BTN_SIZE / 2,
-    backgroundColor: '#eef1f7',
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
+  },
+  addButtonTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(200, 218, 238, 0.18)',
+  },
+  // thin inner ring at top half — simulates specular arc on a sphere
+  addButtonSpecular: {
+    position: 'absolute',
+    top: 1,
+    left: 4,
+    right: 4,
+    height: ADD_BTN_SIZE * 0.38,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
 
-  // Panel — offset from left, grows from pill position
+  // ── Panel ─────────────────────────────────────────────────────────────────
   panelWrap: {
     position: 'absolute',
     left: PANEL_LEFT,
@@ -191,11 +225,25 @@ const styles = StyleSheet.create({
     zIndex: 51,
   },
   panel: {
-    backgroundColor: '#eef1f7',
-    borderRadius: 16,
+    borderRadius: 20,
     maxHeight: PANEL_MAX_HEIGHT,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
+  glassTint: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(205, 220, 238, 0.22)',
+  },
+  specular: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 36,
+  },
+
+  // ── Rows ──────────────────────────────────────────────────────────────────
   scroll: {
     flexGrow: 0,
   },
@@ -213,7 +261,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   rowActive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.52)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.7)',
   },
   rowTitle: {
     flex: 1,
