@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   glassTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(205, 220, 238, 0.22)',
+    backgroundColor: 'rgba(215, 228, 242, 0.72)',
   },
   specular: {
     position: 'absolute',
@@ -261,9 +261,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   rowActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.52)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: 'rgba(8, 40, 68, 0.09)',
   },
   rowTitle: {
     flex: 1,
