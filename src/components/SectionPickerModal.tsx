@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   },
   glassTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(215, 228, 242, 0.72)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
   },
   specular: {
     position: 'absolute',
