@@ -6,9 +6,12 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { FontAwesome7ProSolid } from '../components/FontAwesome7ProSolid';
+import { CaptureAiPill } from '../components/CaptureAiPill';
+import { AudioBottomSheet } from '../components/AudioBottomSheet';
 import { useAiQueue, AiCollection } from '../context/AiQueueContext';
 
 interface ObservationDetailScreenProps {
@@ -26,15 +29,42 @@ function formatDuration(seconds: number): string {
 
 export function ObservationDetailScreen({ navigation, route }: ObservationDetailScreenProps) {
   const insets = useSafeAreaInsets();
-  const { queue } = useAiQueue();
+  const { queue, addAudioToCollection, addPhotoToCollection } = useAiQueue();
   const { collectionId } = route.params;
 
   const collection: AiCollection | undefined = queue.find(c => c.id === collectionId);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress] = useState(0.47); // mock progress: 0–1
+  const [audioSheetVisible, setAudioSheetVisible] = useState(false);
 
   const currentSeconds = Math.round(progress * AUDIO_DURATION);
+
+  async function handleCamera() {
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      addPhotoToCollection(collectionId);
+    }
+  }
+
+  async function handleGallery() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      result.assets.forEach(() => addPhotoToCollection(collectionId));
+    }
+  }
+
+  function handleAudioConfirm(transcript: string) {
+    addAudioToCollection(collectionId, transcript);
+    setAudioSheetVisible(false);
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -47,6 +77,12 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
         >
           <FontAwesome7Pro name="arrow-left" size={18} color="#052339" />
         </TouchableOpacity>
+
+        <CaptureAiPill
+          onCameraPress={handleCamera}
+          onMicPress={() => setAudioSheetVisible(true)}
+          onPhotoPress={handleGallery}
+        />
       </View>
 
       <ScrollView
@@ -63,10 +99,8 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
         <View style={styles.photoGrid}>
           {(collection?.photos ?? []).map((photo, index) => (
             <View key={photo.id} style={styles.photoCard}>
-              {/* Photo placeholder */}
               <View style={styles.photoThumb}>
                 <View style={styles.photoPlaceholder} />
-                {/* Remove button */}
                 <TouchableOpacity style={styles.removeBtn} activeOpacity={0.7}>
                   <FontAwesome7ProSolid name="xmark" size={10} color="#ffffff" />
                 </TouchableOpacity>
@@ -76,7 +110,7 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
           ))}
 
           {/* Add photo button */}
-          <TouchableOpacity style={styles.addPhotoBtn} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.addPhotoBtn} activeOpacity={0.7} onPress={handleGallery}>
             <Text style={styles.addPhotoBtnPlus}>+</Text>
           </TouchableOpacity>
         </View>
@@ -89,7 +123,6 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { flex: progress }]} />
             <View style={[styles.progressRemainder, { flex: 1 - progress }]} />
-            {/* Thumb */}
             <View style={[styles.progressThumb, { left: `${progress * 100}%` as any }]} />
           </View>
           <View style={styles.timeRow}>
@@ -101,12 +134,10 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
 
         {/* Controls */}
         <View style={styles.controls}>
-          {/* Skip back */}
           <TouchableOpacity style={styles.controlBtn} activeOpacity={0.7}>
             <FontAwesome7Pro name="rotate-left" size={20} color="#374151" />
           </TouchableOpacity>
 
-          {/* Play / Pause */}
           <TouchableOpacity
             style={styles.playBtn}
             activeOpacity={0.85}
@@ -119,12 +150,18 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
             />
           </TouchableOpacity>
 
-          {/* Skip forward */}
           <TouchableOpacity style={styles.controlBtn} activeOpacity={0.7}>
             <FontAwesome7Pro name="rotate-right" size={20} color="#374151" />
           </TouchableOpacity>
         </View>
       </View>
+
+      <AudioBottomSheet
+        visible={audioSheetVisible}
+        onCancel={() => setAudioSheetVisible(false)}
+        onConfirm={handleAudioConfirm}
+        inputType="mic"
+      />
     </View>
   );
 }
@@ -140,6 +177,7 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -207,10 +245,7 @@ const styles = StyleSheet.create({
   photoCaption: {
     fontSize: 12,
     color: '#787086',
-    letterSpacing: 0,
   },
-
-  // Add photo
   addPhotoBtn: {
     width: 64,
     height: 64,
@@ -299,6 +334,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#1771b8',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 2, // optical centering for play icon
+    paddingLeft: 2,
   },
 });
