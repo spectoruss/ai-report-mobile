@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 import { FontAwesome7ProSolid } from './FontAwesome7ProSolid';
 import { CaptureAiPill } from './CaptureAiPill';
+import { useAiQueue } from '../context/AiQueueContext';
 
 export interface SectionContext {
   id: string;
@@ -231,6 +232,10 @@ export function AiAssistOverlay({
   const [results, setResults] = useState<MockSection[] | null>(null);
   const [scopeDismissed, setScopeDismissed] = useState(false);
 
+  const { queue, processingBySection } = useAiQueue();
+  const processingCount = Object.values(processingBySection).reduce((sum, s) => sum + s.count, 0);
+  const totalCount = queue.length + processingCount;
+
   const isScoped = !!sectionContext && !scopeDismissed;
   const hasCaptureCallbacks = !!(onCameraPress || onMicPress || onPhotoPress);
 
@@ -273,20 +278,27 @@ export function AiAssistOverlay({
           />
           {query.length > 0 && (
             <TouchableOpacity
-              onPress={() => setQuery('')}
+              onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <FontAwesome7Pro name="xmark-circle" size={16} color="#9ca3af" />
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity
-          style={styles.sparklesButton}
-          activeOpacity={0.7}
-          onPress={onSparklesPress}
-        >
-          <FontAwesome7ProSolid name="sparkle" size={18} color="#052339" />
-        </TouchableOpacity>
+        <View>
+          <TouchableOpacity
+            style={styles.sparklesButton}
+            activeOpacity={0.7}
+            onPress={onSparklesPress}
+          >
+            <FontAwesome7ProSolid name="sparkle" size={18} color="#052339" />
+          </TouchableOpacity>
+          {totalCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{totalCount}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Section scope chip — contextual only, does not filter results */}
@@ -395,6 +407,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#0779ac',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
   },
   // Scope chip
   scopeRow: {
