@@ -379,6 +379,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
         onMicPress={() => openInput('mic')}
         onCameraPress={handleDirectCamera}
         onPhotoPress={handleDirectGallery}
+        onSparklesPress={() => navigation.navigate('AiObservations')}
       />
     </View>
   );

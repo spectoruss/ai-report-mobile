@@ -74,6 +74,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         visible={searchVisible}
         initialQuery={searchQuery}
         onClose={() => setSearchVisible(false)}
+        onSparklesPress={() => navigation.navigate('AiObservations')}
       />
     </View>
   );

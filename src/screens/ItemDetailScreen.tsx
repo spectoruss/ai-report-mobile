@@ -366,6 +366,7 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
         onMicPress={() => openInput('mic')}
         onCameraPress={handleDirectCamera}
         onPhotoPress={handleDirectGallery}
+        onSparklesPress={() => navigation.navigate('AiObservations')}
       />
     </View>
   );

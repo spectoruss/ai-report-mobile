@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
+import { FontAwesome7ProSolid } from './FontAwesome7ProSolid';
 import { CaptureAiPill } from './CaptureAiPill';
 
 export interface SectionContext {
@@ -25,6 +26,7 @@ interface AiAssistOverlayProps {
   onCameraPress?: () => void;
   onMicPress?: () => void;
   onPhotoPress?: () => void;
+  onSparklesPress?: () => void;
 }
 
 type Rating = 'IN' | 'NI' | 'NP' | 'D';
@@ -214,11 +216,6 @@ function SearchResultRow({ item }: { item: MockItem }) {
   );
 }
 
-function getFilteredResults(scoped: boolean, sectionId?: string): MockSection[] {
-  if (!scoped || !sectionId) return MOCK_RESULTS;
-  return MOCK_RESULTS.filter(s => s.id === sectionId);
-}
-
 export function AiAssistOverlay({
   visible,
   onClose,
@@ -227,6 +224,7 @@ export function AiAssistOverlay({
   onCameraPress,
   onMicPress,
   onPhotoPress,
+  onSparklesPress,
 }: AiAssistOverlayProps) {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState(initialQuery);
@@ -241,7 +239,7 @@ export function AiAssistOverlay({
       setQuery(initialQuery);
       setScopeDismissed(false);
       if (initialQuery.trim()) {
-        setResults(getFilteredResults(!!sectionContext, sectionContext?.id));
+        setResults(MOCK_RESULTS);
       }
     } else {
       setResults(null);
@@ -249,21 +247,8 @@ export function AiAssistOverlay({
     }
   }, [visible, initialQuery]);
 
-  function handleClear() {
-    setQuery('');
-    setResults(null);
-    onClose();
-  }
-
   function handleSubmit() {
     if (query.trim()) {
-      setResults(getFilteredResults(isScoped, sectionContext?.id));
-    }
-  }
-
-  function handleDismissScope() {
-    setScopeDismissed(true);
-    if (results) {
       setResults(MOCK_RESULTS);
     }
   }
@@ -295,25 +280,28 @@ export function AiAssistOverlay({
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
-          <Text style={styles.cancelText}>Cancel</Text>
+        <TouchableOpacity
+          style={styles.sparklesButton}
+          activeOpacity={0.7}
+          onPress={onSparklesPress}
+        >
+          <FontAwesome7ProSolid name="sparkle" size={18} color="#052339" />
         </TouchableOpacity>
       </View>
 
-      {/* Section scope chip */}
+      {/* Section scope chip — contextual only, does not filter results */}
       {isScoped && (
         <View style={styles.scopeRow}>
           <View style={styles.scopeChip}>
             <FontAwesome7Pro name={sectionContext!.icon} size={12} color="#0779ac" />
             <Text style={styles.scopeChipText}>{sectionContext!.title}</Text>
             <TouchableOpacity
-              onPress={handleDismissScope}
+              onPress={() => setScopeDismissed(true)}
               hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             >
               <FontAwesome7Pro name="xmark" size={10} color="#0779ac" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.scopeHint}>Searching in this section</Text>
         </View>
       )}
 
@@ -400,20 +388,16 @@ const styles = StyleSheet.create({
     boxShadow: 'none',
     borderWidth: 0,
   } as any,
-  cancelButton: {
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-  },
-  cancelText: {
-    fontSize: 15,
-    color: '#0779ac',
-    fontWeight: '500',
+  sparklesButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#eef1f7',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Scope chip
   scopeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     paddingHorizontal: 12,
     paddingBottom: 8,
   },
@@ -430,10 +414,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     color: '#0779ac',
-  },
-  scopeHint: {
-    fontSize: 13,
-    color: '#9ca3af',
   },
   // Results
   scroll: {
