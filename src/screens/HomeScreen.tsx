@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome6 } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { REPORT_SECTIONS, Section } from '../data/mockData';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { ReportTopBar } from '../components/ReportTopBar';
 import { ProcessedBanner } from '../components/ProcessedBanner';
+import { AiAssistOverlay } from '../components/AiAssistOverlay';
 
 interface HomeScreenProps {
   navigation: any;
@@ -13,6 +14,8 @@ interface HomeScreenProps {
 
 export function HomeScreen({ navigation }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   function handleSectionPress(section: Section) {
     navigation.navigate('SectionDetail', { sectionId: section.id });
@@ -24,6 +27,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         navigation={navigation}
         backIcon="xmark"
         onBack={() => navigation.goBack()}
+        onSearchOpen={(q) => { setSearchQuery(q); setSearchVisible(true); }}
       />
       <ProcessedBanner />
       {/* Masthead photo */}
@@ -66,6 +70,11 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         </TouchableOpacity>
       </View>
 
+      <AiAssistOverlay
+        visible={searchVisible}
+        initialQuery={searchQuery}
+        onClose={() => setSearchVisible(false)}
+      />
     </View>
   );
 }

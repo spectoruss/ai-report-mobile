@@ -19,6 +19,7 @@ import { AttachMediaSheet } from '../components/AttachMediaSheet';
 import { ProcessedBanner } from '../components/ProcessedBanner';
 import { SectionPickerModal } from '../components/SectionPickerModal';
 import { CoachmarkOverlay } from '../components/CoachmarkOverlay';
+import { AiAssistOverlay } from '../components/AiAssistOverlay';
 import { useAiQueue } from '../context/AiQueueContext';
 
 interface ItemDetailScreenProps {
@@ -48,6 +49,8 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
   const [audioSheetVisible, setAudioSheetVisible] = useState(false);
   const [attachMediaVisible, setAttachMediaVisible] = useState(false);
   const [inputType, setInputType] = useState<InputType>('mic');
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const pendingTranscript = useRef<string>('');
 
@@ -203,10 +206,7 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
       <ReportTopBar
         navigation={navigation}
         onBack={() => navigation.goBack()}
-        sectionContext={{ id: section.id, title: section.title, icon: section.icon }}
-        onMicCapture={() => openInput('mic')}
-        onCameraCapture={handleDirectCamera}
-        onPhotoCapture={handleDirectGallery}
+        onSearchOpen={(q) => { setSearchQuery(q); setSearchVisible(true); }}
       />
       <ProcessedBanner />
 
@@ -356,6 +356,17 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
           onNotNow={handleNotNow}
         />
       </AppBottomSheet>
+
+      {/* Search overlay — rendered here so absoluteFillObject fills the full screen */}
+      <AiAssistOverlay
+        visible={searchVisible}
+        initialQuery={searchQuery}
+        onClose={() => setSearchVisible(false)}
+        sectionContext={{ id: section.id, title: section.title, icon: section.icon }}
+        onMicPress={() => openInput('mic')}
+        onCameraPress={handleDirectCamera}
+        onPhotoPress={handleDirectGallery}
+      />
     </View>
   );
 }

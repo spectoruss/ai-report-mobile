@@ -19,6 +19,7 @@ import { AttachMediaSheet } from '../components/AttachMediaSheet';
 import { SectionPickerModal } from '../components/SectionPickerModal';
 import { ProcessedBanner } from '../components/ProcessedBanner';
 import { CoachmarkOverlay } from '../components/CoachmarkOverlay';
+import { AiAssistOverlay } from '../components/AiAssistOverlay';
 import { useAiQueue } from '../context/AiQueueContext';
 
 interface SectionDetailScreenProps {
@@ -55,6 +56,8 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
   const [audioSheetVisible, setAudioSheetVisible] = useState(false);
   const [attachMediaVisible, setAttachMediaVisible] = useState(false);
   const [sectionPickerVisible, setSectionPickerVisible] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [inputType, setInputType] = useState<InputType>('mic');
   const [activeSubsectionId, setActiveSubsectionId] = useState<string | null>(null);
 
@@ -207,10 +210,7 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
       <ReportTopBar
         navigation={navigation}
         onBack={() => navigation.goBack()}
-        sectionContext={{ id: section.id, title: section.title, icon: section.icon }}
-        onMicCapture={() => openInput('mic')}
-        onCameraCapture={handleDirectCamera}
-        onPhotoCapture={handleDirectGallery}
+        onSearchOpen={(q) => { setSearchQuery(q); setSearchVisible(true); }}
       />
       <ProcessedBanner />
       {/* Scroll area + floating action bar */}
@@ -369,6 +369,17 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
           onNotNow={handleNotNow}
         />
       </AppBottomSheet>
+
+      {/* Search overlay — rendered here so absoluteFillObject fills the full screen */}
+      <AiAssistOverlay
+        visible={searchVisible}
+        initialQuery={searchQuery}
+        onClose={() => setSearchVisible(false)}
+        sectionContext={{ id: section.id, title: section.title, icon: section.icon }}
+        onMicPress={() => openInput('mic')}
+        onCameraPress={handleDirectCamera}
+        onPhotoPress={handleDirectGallery}
+      />
     </View>
   );
 }

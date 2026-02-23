@@ -4,7 +4,6 @@ import { IconButton } from './IconButton';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 import { FontAwesome7ProSolid } from './FontAwesome7ProSolid';
 import { useAiQueue } from '../context/AiQueueContext';
-import { AiAssistOverlay, SectionContext } from './AiAssistOverlay';
 
 // Width of the right-side buttons when fully shown:
 // 8 (gap) + 48 (sparkles) + 8 (gap) + 48 (ellipsis) = 112
@@ -17,22 +16,16 @@ interface ReportTopBarProps {
   navigation: any;
   onBack?: () => void;
   backIcon?: string;
-  sectionContext?: SectionContext;
-  onCameraCapture?: () => void;
-  onMicCapture?: () => void;
-  onPhotoCapture?: () => void;
+  /** Called when user submits a search; the overlay is owned by the screen, not the top bar */
+  onSearchOpen?: (query: string) => void;
 }
 
 export function ReportTopBar({
   navigation,
   onBack,
   backIcon = 'arrow-left',
-  sectionContext,
-  onCameraCapture,
-  onMicCapture,
-  onPhotoCapture,
+  onSearchOpen,
 }: ReportTopBarProps) {
-  const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
@@ -96,8 +89,11 @@ export function ReportTopBar({
   }
 
   function handleSearchSubmit() {
-    if (searchQuery.trim()) {
-      setSearchVisible(true);
+    const q = searchQuery.trim();
+    if (q) {
+      // Hand off to the screen-level overlay and return TopBar to resting state
+      onSearchOpen?.(q);
+      collapseSearch();
     }
   }
 
@@ -164,16 +160,6 @@ export function ReportTopBar({
           onPress={() => navigation.navigate('ToolbarConfig')}
         />
       </Animated.View>
-
-      <AiAssistOverlay
-        visible={searchVisible}
-        initialQuery={searchQuery}
-        onClose={() => { setSearchVisible(false); setSearchQuery(''); }}
-        sectionContext={sectionContext}
-        onCameraPress={onCameraCapture}
-        onMicPress={onMicCapture}
-        onPhotoPress={onPhotoCapture}
-      />
     </View>
   );
 }
