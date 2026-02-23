@@ -14,6 +14,7 @@ import { ItemDetailScreen } from './src/screens/ItemDetailScreen';
 import { CommentMatchScreen } from './src/screens/CommentMatchScreen';
 import { CameraScreen } from './src/screens/CameraScreen';
 import { NewSectionScreen } from './src/screens/NewSectionScreen';
+import { ObservationDetailScreen } from './src/screens/ObservationDetailScreen';
 import { ToolbarProvider } from './src/context/ToolbarContext';
 import { AiQueueProvider } from './src/context/AiQueueContext';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -25,6 +26,7 @@ export type RootStackParamList = {
   ToolbarConfig: undefined;
   AiObservations: undefined;
   CollectionDetail: { collectionId: string };
+  ObservationDetail: { collectionId: string };
   CommentMatch: undefined;
   Camera: { collectionId: string };
   NewSection: undefined;
@@ -57,6 +59,7 @@ export default function App() {
                   options={{ presentation: 'modal' }}
                 />
                 <Stack.Screen name="CollectionDetail" component={CollectionDetailScreen} />
+                <Stack.Screen name="ObservationDetail" component={ObservationDetailScreen} />
                 <Stack.Screen
                   name="CommentMatch"
                   component={CommentMatchScreen}

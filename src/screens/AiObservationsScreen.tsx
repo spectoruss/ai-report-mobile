@@ -181,7 +181,7 @@ export function AiObservationsScreen({ navigation }: AiObservationsScreenProps) 
                 <CollectionItem
                   key={col.id}
                   collection={col}
-                  onPress={() => navigation.navigate('CollectionDetail', { collectionId: col.id })}
+                  onPress={() => navigation.navigate('ObservationDetail', { collectionId: col.id })}
                   onAddAudio={() => handleAddAudio(col.id)}
                   onAddPhoto={() => handleAddPhoto(col.id)}
                 />
