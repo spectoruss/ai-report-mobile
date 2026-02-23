@@ -4,7 +4,7 @@ import { IconButton } from './IconButton';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
 import { FontAwesome7ProSolid } from './FontAwesome7ProSolid';
 import { useAiQueue } from '../context/AiQueueContext';
-import { AiAssistOverlay } from './AiAssistOverlay';
+import { AiAssistOverlay, SectionContext } from './AiAssistOverlay';
 
 // Width of the right-side buttons when fully shown:
 // 8 (gap) + 48 (sparkles) + 8 (gap) + 48 (ellipsis) = 112
@@ -17,9 +17,21 @@ interface ReportTopBarProps {
   navigation: any;
   onBack?: () => void;
   backIcon?: string;
+  sectionContext?: SectionContext;
+  onCameraCapture?: () => void;
+  onMicCapture?: () => void;
+  onPhotoCapture?: () => void;
 }
 
-export function ReportTopBar({ navigation, onBack, backIcon = 'arrow-left' }: ReportTopBarProps) {
+export function ReportTopBar({
+  navigation,
+  onBack,
+  backIcon = 'arrow-left',
+  sectionContext,
+  onCameraCapture,
+  onMicCapture,
+  onPhotoCapture,
+}: ReportTopBarProps) {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -157,6 +169,10 @@ export function ReportTopBar({ navigation, onBack, backIcon = 'arrow-left' }: Re
         visible={searchVisible}
         initialQuery={searchQuery}
         onClose={() => { setSearchVisible(false); setSearchQuery(''); }}
+        sectionContext={sectionContext}
+        onCameraPress={onCameraCapture}
+        onMicPress={onMicCapture}
+        onPhotoPress={onPhotoCapture}
       />
     </View>
   );

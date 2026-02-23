@@ -200,7 +200,14 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ReportTopBar navigation={navigation} onBack={() => navigation.goBack()} />
+      <ReportTopBar
+        navigation={navigation}
+        onBack={() => navigation.goBack()}
+        sectionContext={{ id: section.id, title: section.title, icon: section.icon }}
+        onMicCapture={() => openInput('mic')}
+        onCameraCapture={handleDirectCamera}
+        onPhotoCapture={handleDirectGallery}
+      />
       <ProcessedBanner />
 
       <View style={styles.scrollWrapper}>

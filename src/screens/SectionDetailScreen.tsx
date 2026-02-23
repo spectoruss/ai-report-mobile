@@ -207,6 +207,10 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
       <ReportTopBar
         navigation={navigation}
         onBack={() => navigation.goBack()}
+        sectionContext={{ id: section.id, title: section.title, icon: section.icon }}
+        onMicCapture={() => openInput('mic')}
+        onCameraCapture={handleDirectCamera}
+        onPhotoCapture={handleDirectGallery}
       />
       <ProcessedBanner />
       {/* Scroll area + floating action bar */}

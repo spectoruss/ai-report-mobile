@@ -4,17 +4,27 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Modal,
   ScrollView,
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
+import { CaptureAiPill } from './CaptureAiPill';
+
+export interface SectionContext {
+  id: string;
+  title: string;
+  icon: string;
+}
 
 interface AiAssistOverlayProps {
   visible: boolean;
   onClose: () => void;
   initialQuery?: string;
+  sectionContext?: SectionContext;
+  onCameraPress?: () => void;
+  onMicPress?: () => void;
+  onPhotoPress?: () => void;
 }
 
 type Rating = 'IN' | 'NI' | 'NP' | 'D';
@@ -204,19 +214,38 @@ function SearchResultRow({ item }: { item: MockItem }) {
   );
 }
 
-export function AiAssistOverlay({ visible, onClose, initialQuery = '' }: AiAssistOverlayProps) {
+function getFilteredResults(scoped: boolean, sectionId?: string): MockSection[] {
+  if (!scoped || !sectionId) return MOCK_RESULTS;
+  return MOCK_RESULTS.filter(s => s.id === sectionId);
+}
+
+export function AiAssistOverlay({
+  visible,
+  onClose,
+  initialQuery = '',
+  sectionContext,
+  onCameraPress,
+  onMicPress,
+  onPhotoPress,
+}: AiAssistOverlayProps) {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<MockSection[] | null>(null);
+  const [scopeDismissed, setScopeDismissed] = useState(false);
+
+  const isScoped = !!sectionContext && !scopeDismissed;
+  const hasCaptureCallbacks = !!(onCameraPress || onMicPress || onPhotoPress);
 
   useEffect(() => {
     if (visible) {
       setQuery(initialQuery);
+      setScopeDismissed(false);
       if (initialQuery.trim()) {
-        setResults(MOCK_RESULTS);
+        setResults(getFilteredResults(!!sectionContext, sectionContext?.id));
       }
     } else {
       setResults(null);
+      setScopeDismissed(false);
     }
   }, [visible, initialQuery]);
 
@@ -228,72 +257,119 @@ export function AiAssistOverlay({ visible, onClose, initialQuery = '' }: AiAssis
 
   function handleSubmit() {
     if (query.trim()) {
+      setResults(getFilteredResults(isScoped, sectionContext?.id));
+    }
+  }
+
+  function handleDismissScope() {
+    setScopeDismissed(true);
+    if (results) {
       setResults(MOCK_RESULTS);
     }
   }
 
-  return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* Search field — transposed from the top bar */}
-        <View style={styles.searchHeader}>
-          <View style={styles.searchPill}>
-            <FontAwesome7Pro name="magnifying-glass" size={18} color="#09334b" />
-            <TextInput
-              style={styles.searchInput}
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={handleSubmit}
-              returnKeyType="search"
-              placeholder="Search..."
-              placeholderTextColor="#647382"
-            />
-            {query.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClear}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <FontAwesome7Pro name="xmark-circle" size={16} color="#9ca3af" />
-              </TouchableOpacity>
-            )}
-          </View>
-          <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
+  if (!visible) return null;
 
-        {results ? (
-          <ScrollView
-            style={styles.scroll}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 16 }]}
-            keyboardShouldPersistTaps="handled"
-          >
-            {results.map(section => (
-              <View key={section.id} style={styles.sectionGroup}>
-                <View style={[styles.sectionBanner, { backgroundColor: section.color }]}>
-                  <Text style={styles.sectionBannerText}>{section.title.toUpperCase()}</Text>
-                </View>
-                {section.items.map(item => (
-                  <SearchResultRow key={item.id} item={item} />
-                ))}
-              </View>
-            ))}
-          </ScrollView>
-        ) : (
-          <View style={styles.emptyState}>
-            <FontAwesome7Pro name="magnifying-glass" size={28} color="#d1d5db" />
-            <Text style={styles.emptyText}>Search across all report sections</Text>
-          </View>
-        )}
+  return (
+    <View style={[styles.overlay, { paddingTop: insets.top }]}>
+      {/* Search header */}
+      <View style={styles.searchHeader}>
+        <View style={styles.searchPill}>
+          <FontAwesome7Pro name="magnifying-glass" size={18} color="#09334b" />
+          <TextInput
+            autoFocus
+            style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            onSubmitEditing={handleSubmit}
+            returnKeyType="search"
+            placeholder="Search..."
+            placeholderTextColor="#647382"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setQuery('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <FontAwesome7Pro name="xmark-circle" size={16} color="#9ca3af" />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
-    </Modal>
+
+      {/* Section scope chip */}
+      {isScoped && (
+        <View style={styles.scopeRow}>
+          <View style={styles.scopeChip}>
+            <FontAwesome7Pro name={sectionContext!.icon} size={12} color="#0779ac" />
+            <Text style={styles.scopeChipText}>{sectionContext!.title}</Text>
+            <TouchableOpacity
+              onPress={handleDismissScope}
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <FontAwesome7Pro name="xmark" size={10} color="#0779ac" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.scopeHint}>Searching in this section</Text>
+        </View>
+      )}
+
+      {results ? (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: (hasCaptureCallbacks ? 72 : 0) + insets.bottom + 16 },
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
+          {results.map(section => (
+            <View key={section.id} style={styles.sectionGroup}>
+              <View style={[styles.sectionBanner, { backgroundColor: section.color }]}>
+                <Text style={styles.sectionBannerText}>{section.title.toUpperCase()}</Text>
+              </View>
+              {section.items.map(item => (
+                <SearchResultRow key={item.id} item={item} />
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+      ) : (
+        <View style={[styles.emptyState, { paddingBottom: hasCaptureCallbacks ? 72 : 0 }]}>
+          <FontAwesome7Pro name="magnifying-glass" size={28} color="#d1d5db" />
+          <Text style={styles.emptyText}>
+            {isScoped
+              ? `Search in ${sectionContext!.title}`
+              : 'Search across all report sections'}
+          </Text>
+        </View>
+      )}
+
+      {/* Capture pill — pinned to bottom, non-interrupting */}
+      {hasCaptureCallbacks && (
+        <View style={[styles.captureBar, { paddingBottom: insets.bottom + 10 }]}>
+          <CaptureAiPill
+            showCamera={!!onCameraPress}
+            showMic={!!onMicPress}
+            showPhoto={!!onPhotoPress}
+            onCameraPress={onCameraPress ?? (() => {})}
+            onMicPress={onMicPress ?? (() => {})}
+            onPhotoPress={onPhotoPress ?? (() => {})}
+          />
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#f6f8f9',
+    zIndex: 999,
   },
   // Search header
   searchHeader: {
@@ -332,6 +408,32 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#0779ac',
     fontWeight: '500',
+  },
+  // Scope chip
+  scopeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+  },
+  scopeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 100,
+  },
+  scopeChipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#0779ac',
+  },
+  scopeHint: {
+    fontSize: 13,
+    color: '#9ca3af',
   },
   // Results
   scroll: {
@@ -412,10 +514,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
-    paddingBottom: 80,
   },
   emptyText: {
     fontSize: 15,
     color: '#9ca3af',
+  },
+  // Capture bar
+  captureBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#f6f8f9',
+    borderTopWidth: 1,
+    borderTopColor: '#e8eaed',
   },
 });
