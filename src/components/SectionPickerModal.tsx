@@ -233,15 +233,13 @@ const styles = StyleSheet.create({
     ...({ boxShadow: '0 10px 40px rgba(9,51,75,0.22), 0 2px 8px rgba(9,51,75,0.10)' } as any),
   },
   panel: {
-    borderRadius: 20,
+    borderRadius: 16,
     maxHeight: PANEL_MAX_HEIGHT,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   glassTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.60)',
+    backgroundColor: '#EEF1F7',
   },
   specular: {
     position: 'absolute',
