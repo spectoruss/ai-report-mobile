@@ -83,7 +83,7 @@ export function SectionPickerModal({
         activeOpacity={1}
       />
 
-      {/* Floating add button — liquid glass circle */}
+      {/* Floating add button */}
       <Animated.View
         style={[
           styles.addButtonWrap,
@@ -101,12 +101,6 @@ export function SectionPickerModal({
             onAddSection?.();
           }}
         >
-          {/* Blur layer */}
-          <BlurView intensity={55} tint="light" style={StyleSheet.absoluteFillObject} />
-          {/* Cool glass tint */}
-          <View style={styles.addButtonTint} pointerEvents="none" />
-          {/* Specular ring highlight */}
-          <View style={styles.addButtonSpecular} pointerEvents="none" />
           <FontAwesome7Pro name="plus" size={16} color="#1a3a52" />
         </TouchableOpacity>
       </Animated.View>
@@ -190,30 +184,21 @@ const styles = StyleSheet.create({
     left: PANEL_LEFT,
     bottom: PANEL_MAX_HEIGHT + 12,
     zIndex: 52,
+    borderRadius: ADD_BTN_SIZE / 2,
+    shadowColor: '#09334b',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 28,
+    elevation: 14,
+    ...({ boxShadow: '0 10px 40px rgba(9,51,75,0.22), 0 2px 8px rgba(9,51,75,0.10)' } as any),
   },
   addButton: {
     width: ADD_BTN_SIZE,
     height: ADD_BTN_SIZE,
     borderRadius: ADD_BTN_SIZE / 2,
-    overflow: 'hidden',
+    backgroundColor: '#EEF1F7',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.55)',
-  },
-  addButtonTint: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(200, 218, 238, 0.18)',
-  },
-  // thin inner ring at top half — simulates specular arc on a sphere
-  addButtonSpecular: {
-    position: 'absolute',
-    top: 1,
-    left: 4,
-    right: 4,
-    height: ADD_BTN_SIZE * 0.38,
-    borderRadius: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.28)',
   },
 
   // ── Panel ─────────────────────────────────────────────────────────────────
@@ -223,13 +208,12 @@ const styles = StyleSheet.create({
     right: PANEL_RIGHT,
     bottom: 12,
     zIndex: 51,
-    // iOS/Android shadow
+    borderRadius: 16,
     shadowColor: '#09334b',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.22,
     shadowRadius: 28,
     elevation: 14,
-    // Web layered shadow
     ...({ boxShadow: '0 10px 40px rgba(9,51,75,0.22), 0 2px 8px rgba(9,51,75,0.10)' } as any),
   },
   panel: {
