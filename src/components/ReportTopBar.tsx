@@ -133,11 +133,18 @@ export function ReportTopBar({
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Sparkles + ellipsis — slide out when focused */}
+      {/* Ellipsis + sparkles — slide out when focused */}
       <Animated.View
         style={[styles.sideSlot, { width: rightWidthAnim, opacity: rightOpacity }]}
         pointerEvents={isFocused ? 'none' : 'auto'}
       >
+        <IconButton
+          name="ellipsis-vertical"
+          iconColor="#052339"
+          backgroundColor="#eef1f7"
+          borderRadius={16}
+          onPress={() => navigation.navigate('ToolbarConfig')}
+        />
         <View>
           <TouchableOpacity
             style={styles.sparklesButton}
@@ -152,13 +159,6 @@ export function ReportTopBar({
             </View>
           )}
         </View>
-        <IconButton
-          name="ellipsis-vertical"
-          iconColor="#052339"
-          backgroundColor="#eef1f7"
-          borderRadius={16}
-          onPress={() => navigation.navigate('ToolbarConfig')}
-        />
       </Animated.View>
     </View>
   );
@@ -220,8 +220,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: 2,
+    right: 2,
     width: 18,
     height: 18,
     borderRadius: 9,
