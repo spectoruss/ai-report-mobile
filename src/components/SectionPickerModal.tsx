@@ -223,6 +223,14 @@ const styles = StyleSheet.create({
     right: PANEL_RIGHT,
     bottom: 12,
     zIndex: 51,
+    // iOS/Android shadow
+    shadowColor: '#09334b',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 28,
+    elevation: 14,
+    // Web layered shadow
+    ...({ boxShadow: '0 10px 40px rgba(9,51,75,0.22), 0 2px 8px rgba(9,51,75,0.10)' } as any),
   },
   panel: {
     borderRadius: 20,
@@ -233,7 +241,7 @@ const styles = StyleSheet.create({
   },
   glassTint: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.92)',
+    backgroundColor: 'rgba(255, 255, 255, 0.60)',
   },
   specular: {
     position: 'absolute',
