@@ -134,18 +134,19 @@ export function ReportTopBar({
       </Animated.View>
 
       {/* Ellipsis + sparkles — slide out when focused */}
+      {/* Outer has no overflow so the badge can bleed; inner clip handles animation */}
       <Animated.View
-        style={[styles.sideSlot, { width: rightWidthAnim, opacity: rightOpacity }]}
+        style={[styles.sideSlotOuter, { width: rightWidthAnim, opacity: rightOpacity }]}
         pointerEvents={isFocused ? 'none' : 'auto'}
       >
-        <IconButton
-          name="ellipsis-vertical"
-          iconColor="#052339"
-          backgroundColor="#eef1f7"
-          borderRadius={16}
-          onPress={() => navigation.navigate('ToolbarConfig')}
-        />
-        <View>
+        <View style={styles.sideSlotClip}>
+          <IconButton
+            name="ellipsis-vertical"
+            iconColor="#052339"
+            backgroundColor="#eef1f7"
+            borderRadius={16}
+            onPress={() => navigation.navigate('ToolbarConfig')}
+          />
           <TouchableOpacity
             style={styles.sparklesButton}
             activeOpacity={0.7}
@@ -153,12 +154,12 @@ export function ReportTopBar({
           >
             <FontAwesome7ProSolid name="sparkle" size={18} color="#052339" />
           </TouchableOpacity>
-          {totalCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{totalCount}</Text>
-            </View>
-          )}
         </View>
+        {totalCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{totalCount}</Text>
+          </View>
+        )}
       </Animated.View>
     </View>
   );
@@ -193,13 +194,26 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   } as any,
 
-  // Container for animated side slots — overflow hidden so content clips during animation
+  // Dismiss slot — overflow hidden clips the single button during animation
   sideSlot: {
     overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingLeft: 8, // the inter-element gap
+    paddingLeft: 8,
+  },
+  // Right slot — outer has no overflow so badge bleeds naturally outside bounds
+  sideSlotOuter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // Inner clip handles button animation; badge lives outside this in sideSlotOuter
+  sideSlotClip: {
+    overflow: 'hidden',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 8,
   },
 
   dismissButton: {
@@ -220,8 +234,8 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: 2,
-    right: 2,
+    top: -4,
+    right: -4,
     width: 18,
     height: 18,
     borderRadius: 9,
