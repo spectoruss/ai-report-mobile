@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,16 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { REPORT_SECTIONS } from '../data/mockData';
+import { REPORT_SECTIONS, Comment } from '../data/mockData';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { IconButton } from '../components/IconButton';
 import { ReportTopBar } from '../components/ReportTopBar';
+import { CaptureActionBar } from '../components/CaptureActionBar';
+import { AudioBottomSheet } from '../components/AudioBottomSheet';
+import { AppBottomSheet } from '../components/AppBottomSheet';
+import { AttachMediaSheet } from '../components/AttachMediaSheet';
 import { ProcessedBanner } from '../components/ProcessedBanner';
 import { SectionPickerModal } from '../components/SectionPickerModal';
 import { CoachmarkOverlay } from '../components/CoachmarkOverlay';
@@ -20,6 +25,8 @@ interface ItemDetailScreenProps {
   navigation: any;
   route: { params: { sectionId: string; subsectionId: string } };
 }
+
+type InputType = 'mic' | 'camera' | 'photo';
 
 export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
   const insets = useSafeAreaInsets();
@@ -36,14 +43,21 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
   const hasNextSection = sectionIndex < REPORT_SECTIONS.length - 1;
 
   const [checkedOptions, setCheckedOptions] = useState<Record<string, boolean>>({});
+  const [comments, setComments] = useState<Comment[]>(subsection.comments ?? []);
   const [sectionPickerVisible, setSectionPickerVisible] = useState(false);
+  const [audioSheetVisible, setAudioSheetVisible] = useState(false);
+  const [attachMediaVisible, setAttachMediaVisible] = useState(false);
+  const [inputType, setInputType] = useState<InputType>('mic');
 
-  const { showItemCoachmark, triggerItemCoachmark, dismissItemCoachmark } = useAiQueue();
+  const pendingTranscript = useRef<string>('');
+
+  const { addToQueue, showCoachmark, dismissCoachmark, showItemCoachmark, triggerItemCoachmark, dismissItemCoachmark } = useAiQueue();
 
   useEffect(() => {
     triggerItemCoachmark();
     const unsubscribe = navigation.addListener('blur', () => {
       dismissItemCoachmark();
+      dismissCoachmark();
     });
     return unsubscribe;
   }, [navigation]);
@@ -52,33 +66,118 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
     setCheckedOptions(prev => ({ ...prev, [optionId]: !prev[optionId] }));
   }
 
+  // ── Capture handlers ────────────────────────────────────────────────────
+
+  function openInput(type: InputType) {
+    setInputType(type);
+    setAudioSheetVisible(true);
+  }
+
+  function handleAudioConfirm(transcript: string) {
+    pendingTranscript.current = transcript;
+    setAudioSheetVisible(false);
+    setAttachMediaVisible(true);
+  }
+
+  function handleNotNow() {
+    const isAudio = inputType === 'mic';
+    addToQueue({
+      id: Date.now().toString(),
+      sectionId: section.id,
+      sectionTitle: section.title,
+      subsectionId: subsection.id,
+      subsectionTitle: subsection.title,
+      timestamp: new Date(),
+      audio: isAudio ? { transcript: pendingTranscript.current } : null,
+      photos: !isAudio ? [{ id: `photo-${Date.now()}` }] : [],
+    });
+    pendingTranscript.current = '';
+    setAttachMediaVisible(false);
+  }
+
+  async function handleDirectCamera() {
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (!result.canceled) {
+      addToQueue({
+        id: Date.now().toString(),
+        sectionId: section.id,
+        sectionTitle: section.title,
+        subsectionId: subsection.id,
+        subsectionTitle: subsection.title,
+        timestamp: new Date(),
+        audio: null,
+        photos: result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` })),
+      });
+    }
+  }
+
+  async function handleDirectGallery() {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8 });
+    if (!result.canceled) {
+      addToQueue({
+        id: Date.now().toString(),
+        sectionId: section.id,
+        sectionTitle: section.title,
+        subsectionId: subsection.id,
+        subsectionTitle: subsection.title,
+        timestamp: new Date(),
+        audio: null,
+        photos: result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` })),
+      });
+    }
+  }
+
+  async function handleOpenGallery() {
+    setAttachMediaVisible(false);
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, quality: 0.8 });
+    const photos = result.canceled ? [] : result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` }));
+    addToQueue({
+      id: Date.now().toString(),
+      sectionId: section.id,
+      sectionTitle: section.title,
+      subsectionId: subsection.id,
+      subsectionTitle: subsection.title,
+      timestamp: new Date(),
+      audio: pendingTranscript.current ? { transcript: pendingTranscript.current } : null,
+      photos,
+    });
+    pendingTranscript.current = '';
+  }
+
+  async function handleTakePhotos() {
+    setAttachMediaVisible(false);
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const photos = result.canceled ? [] : result.assets.map((_, i) => ({ id: `photo-${Date.now()}-${i}` }));
+    addToQueue({
+      id: Date.now().toString(),
+      sectionId: section.id,
+      sectionTitle: section.title,
+      subsectionId: subsection.id,
+      subsectionTitle: subsection.title,
+      timestamp: new Date(),
+      audio: pendingTranscript.current ? { transcript: pendingTranscript.current } : null,
+      photos,
+    });
+    pendingTranscript.current = '';
+  }
+
+  // ── Navigation handlers ─────────────────────────────────────────────────
+
   function handlePrevItem() {
     if (hasPrevItem) {
-      navigation.replace('ItemDetail', {
-        sectionId,
-        subsectionId: section.subsections[subsectionIndex - 1].id,
-      });
+      navigation.replace('ItemDetail', { sectionId, subsectionId: section.subsections[subsectionIndex - 1].id });
     } else if (hasPrevSection) {
       const prevSection = REPORT_SECTIONS[sectionIndex - 1];
-      navigation.replace('ItemDetail', {
-        sectionId: prevSection.id,
-        subsectionId: prevSection.subsections[prevSection.subsections.length - 1].id,
-      });
+      navigation.replace('ItemDetail', { sectionId: prevSection.id, subsectionId: prevSection.subsections[prevSection.subsections.length - 1].id });
     }
   }
 
   function handleNextItem() {
     if (hasNextItem) {
-      navigation.replace('ItemDetail', {
-        sectionId,
-        subsectionId: section.subsections[subsectionIndex + 1].id,
-      });
+      navigation.replace('ItemDetail', { sectionId, subsectionId: section.subsections[subsectionIndex + 1].id });
     } else if (hasNextSection) {
       const nextSection = REPORT_SECTIONS[sectionIndex + 1];
-      navigation.replace('ItemDetail', {
-        sectionId: nextSection.id,
-        subsectionId: nextSection.subsections[0].id,
-      });
+      navigation.replace('ItemDetail', { sectionId: nextSection.id, subsectionId: nextSection.subsections[0].id });
     }
   }
 
@@ -101,42 +200,66 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ReportTopBar
-        navigation={navigation}
-        onBack={() => navigation.goBack()}
-      />
+      <ReportTopBar navigation={navigation} onBack={() => navigation.goBack()} />
       <ProcessedBanner />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.itemTitle}>{subsection.title}</Text>
 
-        {subsection.options && subsection.options.length > 0 ? (
-          <View style={styles.optionsGroup}>
-            <Text style={styles.optionsLabel}>Select all that apply</Text>
-            {subsection.options.map(option => {
-              const checked = !!checkedOptions[option.id];
-              return (
-                <TouchableOpacity
-                  key={option.id}
-                  style={styles.optionRow}
-                  activeOpacity={0.7}
-                  onPress={() => toggleOption(option.id)}
-                >
-                  <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-                    {checked && <FontAwesome7Pro name="check" size={11} color="#ffffff" />}
-                  </View>
-                  <Text style={[styles.optionLabel, checked && styles.optionLabelChecked]}>
-                    {option.label}
+      <View style={styles.scrollWrapper}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.itemTitle}>{subsection.title}</Text>
+
+          {/* Comment chips — AI-generated observations for this item */}
+          {comments.length > 0 && (
+            <View style={styles.commentsGroup}>
+              {comments.map((comment, idx) => (
+                <View key={idx} style={styles.commentChip}>
+                  <Text style={styles.commentChipIcon}>✦</Text>
+                  <Text style={styles.commentChipText} numberOfLines={3}>
+                    {comment.text}
                   </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No options defined for this item</Text>
-          </View>
-        )}
-      </ScrollView>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Options checklist */}
+          {subsection.options && subsection.options.length > 0 ? (
+            <View style={styles.optionsGroup}>
+              <Text style={styles.optionsLabel}>Select all that apply</Text>
+              {subsection.options.map(option => {
+                const checked = !!checkedOptions[option.id];
+                return (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={styles.optionRow}
+                    activeOpacity={0.7}
+                    onPress={() => toggleOption(option.id)}
+                  >
+                    <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+                      {checked && <FontAwesome7Pro name="check" size={11} color="#ffffff" />}
+                    </View>
+                    <Text style={[styles.optionLabel, checked && styles.optionLabelChecked]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No options defined for this item</Text>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Floating capture bar */}
+        <View style={styles.floatingBar}>
+          <CaptureActionBar
+            onMicPress={() => openInput('mic')}
+            onCameraAiPress={handleDirectCamera}
+            onPhotoPress={handleDirectGallery}
+          />
+        </View>
+      </View>
 
       {/* Bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
@@ -189,7 +312,7 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
         onAddSection={() => navigation.navigate('NewSection')}
       />
 
-      {/* Coachmark — explain tap vs press & hold on nav arrows */}
+      {/* Coachmark — explain tap vs press & hold */}
       <CoachmarkOverlay
         show={showItemCoachmark}
         onDismiss={dismissItemCoachmark}
@@ -202,6 +325,30 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
           { iconName: 'hand', description: 'Press & hold to jump to a different section' },
         ]}
       />
+
+      {/* Coachmark — Ai queue added */}
+      <CoachmarkOverlay
+        show={showCoachmark}
+        onDismiss={dismissCoachmark}
+        topOffset={insets.top + 72}
+        title="You've added an input to the Ai Queue!"
+        items={[{ iconName: 'arrow-pointer', description: 'Go back to the queue when ready to process' }]}
+      />
+
+      <AudioBottomSheet
+        visible={audioSheetVisible}
+        onCancel={() => setAudioSheetVisible(false)}
+        onConfirm={handleAudioConfirm}
+        inputType={inputType}
+      />
+
+      <AppBottomSheet visible={attachMediaVisible} onClose={() => setAttachMediaVisible(false)}>
+        <AttachMediaSheet
+          onOpenGallery={handleOpenGallery}
+          onTakePhotos={handleTakePhotos}
+          onNotNow={handleNotNow}
+        />
+      </AppBottomSheet>
     </View>
   );
 }
@@ -212,14 +359,50 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     overflow: 'hidden',
   },
+  scrollWrapper: { flex: 1 },
   scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 40 },
+  scrollContent: { padding: 20, paddingBottom: 96 },
+  floatingBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
   itemTitle: {
     fontSize: 22,
     fontWeight: '600',
     color: '#052339',
-    marginBottom: 24,
+    marginBottom: 20,
   },
+
+  // ── Comment chips ──────────────────────────────────────────────────────────
+  commentsGroup: {
+    gap: 6,
+    marginBottom: 20,
+  },
+  commentChip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#f0f9ff',
+    borderRadius: 10,
+    padding: 10,
+    gap: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#0779ac',
+  },
+  commentChipIcon: {
+    fontSize: 10,
+    color: '#0779ac',
+    marginTop: 2,
+  },
+  commentChipText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#052339',
+    lineHeight: 18,
+  },
+
+  // ── Options checklist ─────────────────────────────────────────────────────
   optionsGroup: {
     gap: 4,
   },
@@ -270,6 +453,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#9ca3af',
   },
+
+  // ── Bottom bar ────────────────────────────────────────────────────────────
   bottomBar: {
     flexDirection: 'row',
     alignItems: 'center',

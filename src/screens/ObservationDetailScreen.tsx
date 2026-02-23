@@ -6,12 +6,9 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { FontAwesome7ProSolid } from '../components/FontAwesome7ProSolid';
-import { CaptureAiPill } from '../components/CaptureAiPill';
-import { AudioBottomSheet } from '../components/AudioBottomSheet';
 import { useAiQueue, AiCollection } from '../context/AiQueueContext';
 
 interface ObservationDetailScreenProps {
@@ -29,42 +26,15 @@ function formatDuration(seconds: number): string {
 
 export function ObservationDetailScreen({ navigation, route }: ObservationDetailScreenProps) {
   const insets = useSafeAreaInsets();
-  const { queue, addAudioToCollection, addPhotoToCollection } = useAiQueue();
+  const { queue } = useAiQueue();
   const { collectionId } = route.params;
 
   const collection: AiCollection | undefined = queue.find(c => c.id === collectionId);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress] = useState(0.47); // mock progress: 0–1
-  const [audioSheetVisible, setAudioSheetVisible] = useState(false);
 
   const currentSeconds = Math.round(progress * AUDIO_DURATION);
-
-  async function handleCamera() {
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ['images'],
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      addPhotoToCollection(collectionId);
-    }
-  }
-
-  async function handleGallery() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsMultipleSelection: true,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      result.assets.forEach(() => addPhotoToCollection(collectionId));
-    }
-  }
-
-  function handleAudioConfirm(transcript: string) {
-    addAudioToCollection(collectionId, transcript);
-    setAudioSheetVisible(false);
-  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -77,12 +47,6 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
         >
           <FontAwesome7Pro name="arrow-left" size={18} color="#052339" />
         </TouchableOpacity>
-
-        <CaptureAiPill
-          onCameraPress={handleCamera}
-          onMicPress={() => setAudioSheetVisible(true)}
-          onPhotoPress={handleGallery}
-        />
       </View>
 
       <ScrollView
@@ -110,7 +74,7 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
           ))}
 
           {/* Add photo button */}
-          <TouchableOpacity style={styles.addPhotoBtn} activeOpacity={0.7} onPress={handleGallery}>
+          <TouchableOpacity style={styles.addPhotoBtn} activeOpacity={0.7}>
             <Text style={styles.addPhotoBtnPlus}>+</Text>
           </TouchableOpacity>
         </View>
@@ -155,13 +119,6 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
           </TouchableOpacity>
         </View>
       </View>
-
-      <AudioBottomSheet
-        visible={audioSheetVisible}
-        onCancel={() => setAudioSheetVisible(false)}
-        onConfirm={handleAudioConfirm}
-        inputType="mic"
-      />
     </View>
   );
 }
@@ -172,12 +129,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     overflow: 'hidden',
   },
-
-  // ── Top bar ───────────────────────────────────────────────────────────────
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -189,8 +143,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  // ── Scroll content ────────────────────────────────────────────────────────
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: 16,
@@ -204,8 +156,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.44,
     marginBottom: 24,
   },
-
-  // ── Photo grid ────────────────────────────────────────────────────────────
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -263,8 +213,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     lineHeight: 24,
   },
-
-  // ── Audio player ──────────────────────────────────────────────────────────
   playerWrap: {
     paddingHorizontal: 16,
     paddingTop: 20,
