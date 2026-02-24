@@ -15,6 +15,7 @@ export interface Subsection {
 
 export interface Comment {
   id: string;
+  title?: string;
   text: string;
   tags: string[];
 }
@@ -101,7 +102,10 @@ export const REPORT_SECTIONS: Section[] = [
         ],
       },
       {
-        id: 'ss5', title: 'Gutters & Downspouts', rating: 'NI', comments: [],
+        id: 'ss5', title: 'Gutters & Downspouts', rating: 'NI', comments: [
+          { id: 'ss5-c1', title: 'Gutters Clogged with Debris', text: 'Gutters are clogged with debris throughout. Recommend cleaning to ensure proper drainage and prevent water damage.', tags: ['exterior', 'gutters', 'drainage'] },
+          { id: 'ss5-c2', title: 'Downspout Disconnected', text: 'One downspout is disconnected at the elbow. Recommend reconnecting to direct water away from the foundation.', tags: ['exterior', 'downspout'] },
+        ],
         options: [
           { id: 'ss5-o1', label: 'Aluminum' },
           { id: 'ss5-o2', label: 'Vinyl' },
@@ -112,7 +116,11 @@ export const REPORT_SECTIONS: Section[] = [
         ],
       },
       {
-        id: 'ss6', title: 'Driveway & Walkways', rating: 'IN', comments: [],
+        id: 'ss6', title: 'Driveway & Walkways', rating: 'IN', comments: [
+          { id: 'ss6-c1', title: 'Driveway Cracking — Major', text: 'Major cracks observed across driveway surface. Recommend concrete contractor evaluate and replace affected areas.', tags: ['exterior', 'driveway'] },
+          { id: 'ss6-c2', title: 'Driveway Cracking — Minor', text: 'Minor cosmetic cracks which may indicate movement in the soil. Recommend monitor and/or have evaluated by a qualified contractor.', tags: ['exterior', 'driveway'] },
+          { id: 'ss6-c3', title: 'Drainage Towards Home', text: 'Driveway slopes toward the foundation. Recommend regrading to direct water away from the structure.', tags: ['exterior', 'drainage'] },
+        ],
         options: [
           { id: 'ss6-o1', label: 'Concrete' },
           { id: 'ss6-o2', label: 'Asphalt' },

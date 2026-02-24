@@ -272,48 +272,94 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
             <Text style={styles.itemTitle}>{subsection.title}</Text>
           </View>
 
-          {/* Comment chips — AI-generated observations for this item */}
-          {comments.length > 0 && (
-            <View style={styles.commentsGroup}>
-              {comments.map((comment, idx) => (
-                <View key={idx} style={styles.commentChip}>
-                  <Text style={styles.commentChipIcon}>✦</Text>
-                  <Text style={styles.commentChipText} numberOfLines={3}>
-                    {comment.text}
-                  </Text>
-                </View>
-              ))}
+          {/* Information section */}
+          {subsection.options && subsection.options.length > 0 && (
+            <View style={styles.contentSection}>
+              <View style={[styles.contentSectionHeader, { backgroundColor: '#22c55e' }]}>
+                <Text style={styles.contentSectionTitle}>Information</Text>
+                <TouchableOpacity activeOpacity={0.7}>
+                  <FontAwesome7Pro name="plus" size={15} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.optionsGrid}>
+                {subsection.options.map(option => {
+                  const checked = !!checkedOptions[option.id];
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={styles.optionCell}
+                      activeOpacity={0.7}
+                      onPress={() => toggleOption(option.id)}
+                    >
+                      <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+                        {checked && <FontAwesome7Pro name="check" size={11} color="#ffffff" />}
+                      </View>
+                      <Text style={[styles.optionCellLabel, checked && styles.optionCellLabelChecked]} numberOfLines={2}>
+                        {option.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+                <TouchableOpacity style={styles.optionCell} activeOpacity={0.7}>
+                  <View style={styles.otherCircle}>
+                    <FontAwesome7Pro name="plus" size={10} color="#9ca3af" />
+                  </View>
+                  <Text style={styles.optionCellLabel}>Other</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.itemActionRow}>
+                {(['flag', 'location-dot', 'copy', 'trash'] as const).map((icon, i, arr) => (
+                  <TouchableOpacity
+                    key={icon}
+                    style={[styles.actionButton, i < arr.length - 1 && styles.actionButtonBorder]}
+                    activeOpacity={0.7}
+                  >
+                    <FontAwesome7Pro name={icon} size={17} color="#6b7280" />
+                    <Text style={styles.actionButtonLabel}>{['Flag', 'Location', 'Copy', 'Delete'][i]}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.itemActionRow}>
+                {(['images', 'camera', 'video', 'photo-film', 'film'] as const).map((icon, i, arr) => (
+                  <TouchableOpacity
+                    key={icon}
+                    style={[styles.actionButton, i < arr.length - 1 && styles.actionButtonBorder]}
+                    activeOpacity={0.7}
+                  >
+                    <FontAwesome7Pro name={icon} size={17} color="#6b7280" />
+                    <Text style={styles.actionButtonLabel}>{['+ Photos', '+ Photo', '+ Video', 'Gallery', 'Gallery'][i]}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           )}
 
-          {/* Options checklist */}
-          {subsection.options && subsection.options.length > 0 ? (
-            <View style={styles.optionsGroup}>
-              <Text style={styles.optionsLabel}>Select all that apply</Text>
-              {subsection.options.map(option => {
-                const checked = !!checkedOptions[option.id];
-                return (
-                  <TouchableOpacity
-                    key={option.id}
-                    style={styles.optionRow}
-                    activeOpacity={0.7}
-                    onPress={() => toggleOption(option.id)}
-                  >
-                    <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-                      {checked && <FontAwesome7Pro name="check" size={11} color="#ffffff" />}
-                    </View>
-                    <Text style={[styles.optionLabel, checked && styles.optionLabelChecked]}>
-                      {option.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+          {/* Deficiencies section */}
+          <View style={styles.contentSection}>
+            <View style={[styles.contentSectionHeader, { backgroundColor: '#ef4444' }]}>
+              <Text style={styles.contentSectionTitle}>Deficiencies</Text>
+              <TouchableOpacity activeOpacity={0.7}>
+                <FontAwesome7Pro name="plus" size={15} color="#ffffff" />
+              </TouchableOpacity>
             </View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No options defined for this item</Text>
-            </View>
-          )}
+            {comments.length > 0 ? (
+              comments.map((comment, idx) => (
+                <View key={idx} style={[styles.deficiencyRow, idx < comments.length - 1 && styles.deficiencyRowDivider]}>
+                  <View style={styles.deficiencyCheckbox} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.deficiencyTitle}>{comment.title ?? comment.text}</Text>
+                    {comment.title && (
+                      <Text style={styles.deficiencyDesc} numberOfLines={3}>{comment.text}</Text>
+                    )}
+                  </View>
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptySection}>
+                <Text style={styles.emptySectionText}>No deficiencies noted</Text>
+              </View>
+            )}
+          </View>
         </ScrollView>
 
         {/* Floating capture bar — slides right when audio sheet is active */}
@@ -455,7 +501,7 @@ const styles = StyleSheet.create({
   },
   scrollWrapper: { flex: 1 },
   scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingTop: 8, paddingBottom: 96 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 96 },
   floatingBar: {
     position: 'absolute',
     bottom: 0,
@@ -474,82 +520,145 @@ const styles = StyleSheet.create({
     color: '#052339',
   },
 
-  // ── Comment chips ──────────────────────────────────────────────────────────
-  commentsGroup: {
-    gap: 6,
-    marginBottom: 20,
+  // ── Content sections (Information / Deficiencies) ─────────────────────────
+  contentSection: {
+    borderRadius: 0,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#e5e7eb',
+    overflow: 'hidden',
+    marginBottom: 12,
+    marginHorizontal: -16,
   },
-  commentChip: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#f0f9ff',
-    borderRadius: 10,
-    padding: 10,
-    gap: 6,
-    borderLeftWidth: 3,
-    borderLeftColor: '#0779ac',
-  },
-  commentChipIcon: {
-    fontSize: 10,
-    color: '#0779ac',
-    marginTop: 2,
-  },
-  commentChipText: {
-    flex: 1,
-    fontSize: 13,
-    color: '#052339',
-    lineHeight: 18,
-  },
-
-  // ── Options checklist ─────────────────────────────────────────────────────
-  optionsGroup: {
-    gap: 4,
-  },
-  optionsLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#9ca3af',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-  },
-  optionRow: {
+  contentSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  contentSectionTitle: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // ── Options grid ──────────────────────────────────────────────────────────
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: '#ffffff',
+  },
+  optionCell: {
+    width: '50%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
+    borderRightWidth: 1,
+    borderRightColor: '#f3f4f6',
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
     borderColor: '#d1d5db',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ffffff',
+    flexShrink: 0,
   },
   checkboxChecked: {
     backgroundColor: '#0779ac',
     borderColor: '#0779ac',
   },
-  optionLabel: {
-    fontSize: 16,
+  optionCellLabel: {
+    flex: 1,
+    fontSize: 13,
     color: '#111827',
-    fontWeight: '400',
   },
-  optionLabelChecked: {
+  optionCellLabelChecked: {
     color: '#052339',
     fontWeight: '500',
   },
-  emptyState: {
-    paddingTop: 48,
+  otherCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#d1d5db',
     alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  emptyText: {
-    fontSize: 15,
+
+  // ── Action button rows ────────────────────────────────────────────────────
+  itemActionRow: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    backgroundColor: '#ffffff',
+  },
+  actionButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    gap: 4,
+  },
+  actionButtonBorder: {
+    borderRightWidth: 1,
+    borderRightColor: '#e5e7eb',
+  },
+  actionButtonLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+  },
+
+  // ── Deficiency rows ───────────────────────────────────────────────────────
+  deficiencyRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+  },
+  deficiencyRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  deficiencyCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#d1d5db',
+    marginTop: 2,
+    flexShrink: 0,
+  },
+  deficiencyTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#052339',
+    marginBottom: 2,
+  },
+  deficiencyDesc: {
+    fontSize: 12,
+    color: '#6b7280',
+    lineHeight: 17,
+  },
+  emptySection: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  emptySectionText: {
+    fontSize: 14,
     color: '#9ca3af',
   },
 

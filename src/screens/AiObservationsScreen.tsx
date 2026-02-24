@@ -141,14 +141,16 @@ export function AiObservationsScreen({ navigation }: AiObservationsScreenProps) 
         <IconButton
           name="arrow-left"
           iconColor="#052339"
-          backgroundColor="rgba(0,0,0,0.05)"
+          backgroundColor="#eef1f7"
+          borderRadius={16}
           onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerTitle}>Ai Observations</Text>
         <IconButton
           name="sliders"
           iconColor="#052339"
-          backgroundColor="rgba(0,0,0,0.05)"
+          backgroundColor="#eef1f7"
+          borderRadius={16}
         />
       </View>
 
