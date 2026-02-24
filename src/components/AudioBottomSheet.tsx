@@ -1,88 +1,105 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  Animated,
-  Dimensions,
-} from 'react-native';
-import { FontAwesome6 } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome7Pro } from './FontAwesome7Pro';
+import { useAudioRecording } from '../context/AudioRecordingContext';
 
-interface AudioBottomSheetProps {
-  visible: boolean;
-  onCancel: () => void;
-  onConfirm: (transcript: string) => void;
-  inputType?: 'mic' | 'camera' | 'photo';
-}
+const BOTTOM_BAR_CLEARANCE = 73;
+const WAVEFORM_BARS = 26;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
-const MOCK_TRANSCRIPTS = [
-  'The furnace filter is dirty and needs to be replaced',
-  'Heat exchanger shows rust and corrosion needs evaluation',
-  'Thermostat is functional and working properly',
-  'Ductwork is disconnected in crawlspace needs repair',
-  'Carbon monoxide detector is missing recommend installing',
-  'Gutters are clogged with debris need cleaning',
-  'Foundation has minor cracks typical of settling',
-  'Water staining on basement walls past moisture intrusion',
-];
+export function AudioBottomSheet() {
+  const { isRecording, elapsed, cancelRecording, confirmRecording, isSearchOpen } = useAudioRecording();
+  const insets = useSafeAreaInsets();
+  const [mounted, setMounted] = useState(false);
 
-const WAVEFORM_BARS = 28;
+  // JS driver — translateX for right-side entrance/exit
+  const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
 
-export function AudioBottomSheet({ visible, onCancel, onConfirm, inputType = 'mic' }: AudioBottomSheetProps) {
-  const [elapsed, setElapsed] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const slideAnim = useRef(new Animated.Value(300)).current;
+  // Drives the morph: 0 = full blue pill, 1 = gray recorder
+  const morphAnim = useRef(new Animated.Value(0)).current;
+
+  // Confirm button springs from "mic-tap" scale (native driver — isolated node)
+  const confirmScale = useRef(new Animated.Value(1.18)).current;
+
+  // Shifts the pill down when search overlay is open
+  const searchShiftAnim = useRef(new Animated.Value(0)).current;
+
   const waveValues = useRef(
     Array.from({ length: WAVEFORM_BARS }, () => new Animated.Value(0.2))
   ).current;
+  const waveAnimRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    if (visible) {
-      setElapsed(0);
-      setIsProcessing(false);
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        tension: 80,
-        friction: 10,
-      }).start();
-      animateWaveform();
+    if (isRecording) {
+      setMounted(true);
+      slideAnim.setValue(SCREEN_WIDTH);
+      morphAnim.setValue(0);
+      confirmScale.setValue(1.18);
+
+      startWaveform();
+
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: false,
+          tension: 200,
+          friction: 22,
+        }),
+        Animated.timing(morphAnim, {
+          toValue: 1,
+          duration: 360,
+          useNativeDriver: false,
+        }),
+        Animated.spring(confirmScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 180,
+          friction: 13,
+        }),
+      ]).start();
     } else {
+      waveAnimRef.current?.stop();
       Animated.timing(slideAnim, {
-        toValue: 300,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
+        toValue: SCREEN_WIDTH,
+        duration: 220,
+        useNativeDriver: false,
+      }).start(() => setMounted(false));
     }
-  }, [visible]);
+  }, [isRecording]);
 
-  // Tick timer
+  // Shift pill down when search overlay opens, back up when it closes
   useEffect(() => {
-    if (!visible || isProcessing) return;
-    const interval = setInterval(() => setElapsed(e => e + 1), 1000);
-    return () => clearInterval(interval);
-  }, [visible, isProcessing]);
+    Animated.spring(searchShiftAnim, {
+      toValue: isSearchOpen ? BOTTOM_BAR_CLEARANCE : 0,
+      useNativeDriver: false,
+      tension: 150,
+      friction: 20,
+    }).start();
+  }, [isSearchOpen]);
 
-  function animateWaveform() {
+  function startWaveform() {
+    waveAnimRef.current?.stop();
+    waveValues.forEach(v => v.setValue(0.2));
     const animations = waveValues.map(val =>
       Animated.loop(
         Animated.sequence([
           Animated.timing(val, {
             toValue: Math.random() * 0.8 + 0.2,
-            duration: 200 + Math.random() * 300,
+            duration: 180 + Math.random() * 280,
             useNativeDriver: false,
           }),
           Animated.timing(val, {
-            toValue: Math.random() * 0.3 + 0.1,
-            duration: 200 + Math.random() * 300,
+            toValue: Math.random() * 0.3 + 0.05,
+            duration: 180 + Math.random() * 280,
             useNativeDriver: false,
           }),
         ])
       )
     );
-    Animated.parallel(animations).start();
+    waveAnimRef.current = Animated.parallel(animations);
+    waveAnimRef.current.start();
   }
 
   function formatTime(s: number) {
@@ -91,169 +108,162 @@ export function AudioBottomSheet({ visible, onCancel, onConfirm, inputType = 'mi
     return `${m}:${sec.toString().padStart(2, '0')}`;
   }
 
-  function handleConfirm() {
-    const transcript = MOCK_TRANSCRIPTS[Math.floor(Math.random() * MOCK_TRANSCRIPTS.length)];
-    onConfirm(transcript);
-  }
+  if (!mounted) return null;
 
-  const label = inputType === 'mic' ? 'Recording...' : inputType === 'camera' ? 'Processing image...' : 'Analyzing photo...';
+  // ── Derived animated values ───────────────────────────────────────────────
+
+  const pillBg = morphAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#0779ac', '#EEF1F7'],
+  });
+
+  const contentOpacity = morphAnim.interpolate({
+    inputRange: [0, 0.28, 0.72, 1],
+    outputRange: [0, 0, 0.7, 1],
+  });
+
+  const cancelOpacity = morphAnim.interpolate({
+    inputRange: [0, 0.45, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  const cancelTranslateX = morphAnim.interpolate({
+    inputRange: [0, 0.45, 1],
+    outputRange: [-12, -12, 0],
+  });
 
   return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="none"
-      onRequestClose={onCancel}
+    <Animated.View
+      style={[
+        styles.gradientContainer,
+        {
+          bottom: insets.bottom + BOTTOM_BAR_CLEARANCE,
+          transform: [{ translateX: slideAnim }, { translateY: searchShiftAnim }],
+        },
+      ]}
     >
-      <View style={styles.overlay}>
-        <TouchableOpacity style={styles.backdrop} onPress={onCancel} activeOpacity={1} />
-        <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
-          <View style={styles.row}>
-            {/* Cancel */}
-            <TouchableOpacity style={styles.cancelButton} onPress={onCancel} disabled={isProcessing}>
-              <FontAwesome6 name="xmark" size={16} color="#ffffff" />
-            </TouchableOpacity>
+      {/* Gradient: transparent at top → white from 65% down */}
+      <LinearGradient
+        colors={['rgba(255,255,255,0)', '#ffffff']}
+        locations={[0, 0.85]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+        pointerEvents="none"
+      />
 
-            {/* Center — waveform + timer */}
-            <View style={styles.center}>
-              {isProcessing ? (
-                <View style={styles.processingRow}>
-                  <Text style={styles.processingDot}>●</Text>
-                  <Text style={styles.processingDot}>●</Text>
-                  <Text style={styles.processingDot}>●</Text>
-                  <Text style={styles.processingLabel}>Matching comment...</Text>
-                </View>
-              ) : (
-                <>
-                  <View style={styles.waveform}>
-                    {waveValues.map((val, i) => (
-                      <Animated.View
-                        key={i}
-                        style={[
-                          styles.waveBar,
-                          {
-                            height: val.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [3, 20],
-                            }),
-                            opacity: val.interpolate({
-                              inputRange: [0.1, 1],
-                              outputRange: [0.3, 1],
-                            }),
-                          },
-                        ]}
-                      />
-                    ))}
-                  </View>
-                  <Text style={styles.timer}>{formatTime(elapsed)}</Text>
-                </>
-              )}
+      {/* Pill row */}
+      <View style={styles.pillRow}>
+        {/* Cancel X — slides in from left as morph completes */}
+        <Animated.View
+          style={{
+            opacity: cancelOpacity,
+            transform: [{ translateX: cancelTranslateX }],
+          }}
+        >
+          <TouchableOpacity style={styles.cancelButton} onPress={cancelRecording} activeOpacity={0.7}>
+            <FontAwesome7Pro name="xmark" size={16} color="#5d5d5d" />
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Main pill — morphs from blue to gray */}
+        <Animated.View style={[styles.pill, { backgroundColor: pillBg }]}>
+          {/* Waveform + timer — fade in as pill turns gray */}
+          <Animated.View style={[styles.waveformRow, { opacity: contentOpacity }]}>
+            <View style={styles.waveformArea}>
+              {waveValues.map((val, i) => (
+                <Animated.View
+                  key={i}
+                  style={[
+                    styles.waveBar,
+                    {
+                      height: val.interpolate({ inputRange: [0, 1], outputRange: [2, 18] }),
+                    },
+                  ]}
+                />
+              ))}
             </View>
+            <Text style={styles.timer}>{formatTime(elapsed)}</Text>
+          </Animated.View>
 
-            {/* Confirm */}
-            <TouchableOpacity
-              style={[styles.confirmButton, isProcessing && styles.confirmDisabled]}
-              onPress={handleConfirm}
-              disabled={isProcessing}
-            >
-              <FontAwesome6 name="check" size={20} color="#052339" />
+          {/* Confirm — always visible; springs from mic-tap scale */}
+          <Animated.View style={{ transform: [{ scale: confirmScale }] }}>
+            <TouchableOpacity style={styles.confirmButton} onPress={confirmRecording} activeOpacity={0.7}>
+              <FontAwesome7Pro name="check" size={14} color="#ffffff" />
             </TouchableOpacity>
-          </View>
-
-          {/* Home indicator */}
-          <View style={styles.homeIndicator} />
+          </Animated.View>
         </Animated.View>
       </View>
-    </Modal>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
+  gradientContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 1001,
+    paddingTop: 44, // gradient fade space above pill
   },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  sheet: {
-    backgroundColor: '#052339',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 16,
-    paddingTop: 28,
-    paddingBottom: 12,
-  },
-  row: {
+  pillRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
   },
   cancelButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: '#EEF1F7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  center: {
+  pill: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    gap: 6,
-  },
-  waveform: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    borderRadius: 100,
+    padding: 4,
+    minHeight: 48,
+  },
+  waveformRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  waveformArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
     height: 24,
+    overflow: 'hidden',
   },
   waveBar: {
     width: 2,
-    backgroundColor: '#ffffff',
-    borderRadius: 2,
+    backgroundColor: '#5d5d5d',
+    borderRadius: 1000,
+    flexShrink: 0,
   },
   timer: {
-    color: '#ffffff',
+    color: '#5d5d5d',
     fontSize: 12,
     fontWeight: '500',
-  },
-  processingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  processingDot: {
-    color: '#ffffff',
-    fontSize: 8,
-    opacity: 0.7,
-  },
-  processingLabel: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '500',
-    marginLeft: 4,
+    paddingHorizontal: 8,
+    minWidth: 30,
+    textAlign: 'center',
   },
   confirmButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#ffffff',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#0779ac',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  confirmDisabled: {
-    opacity: 0.5,
-  },
-  homeIndicator: {
-    alignSelf: 'center',
-    width: 86,
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 2,
-    marginTop: 12,
+    flexShrink: 0,
   },
 });

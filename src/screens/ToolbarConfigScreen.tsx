@@ -267,7 +267,7 @@ export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
       <View style={styles.topBar}>
         <IconButton
           name="arrow-left"
-          iconColor="#190042"
+          iconColor="#052339"
           backgroundColor="rgba(0,0,0,0.05)"
           onPress={() => navigation.goBack()}
         />

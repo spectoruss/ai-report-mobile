@@ -17,6 +17,8 @@ import { NewSectionScreen } from './src/screens/NewSectionScreen';
 import { ObservationDetailScreen } from './src/screens/ObservationDetailScreen';
 import { ToolbarProvider } from './src/context/ToolbarContext';
 import { AiQueueProvider } from './src/context/AiQueueContext';
+import { AudioRecordingProvider } from './src/context/AudioRecordingContext';
+import { AudioBottomSheet } from './src/components/AudioBottomSheet';
 import { navigationRef } from './src/navigation/navigationRef';
 
 export type RootStackParamList = {
@@ -47,6 +49,7 @@ export default function App() {
       <SafeAreaProvider>
         <ToolbarProvider>
           <AiQueueProvider>
+            <AudioRecordingProvider>
             <NavigationContainer ref={navigationRef}>
               <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Home" component={HomeScreen} />
@@ -77,6 +80,8 @@ export default function App() {
                 />
               </Stack.Navigator>
             </NavigationContainer>
+            <AudioBottomSheet />
+            </AudioRecordingProvider>
           </AiQueueProvider>
         </ToolbarProvider>
       </SafeAreaProvider>

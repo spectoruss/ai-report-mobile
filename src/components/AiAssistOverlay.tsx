@@ -12,6 +12,7 @@ import { FontAwesome7Pro } from './FontAwesome7Pro';
 import { FontAwesome7ProSolid } from './FontAwesome7ProSolid';
 import { CaptureAiPill } from './CaptureAiPill';
 import { useAiQueue } from '../context/AiQueueContext';
+import { useAudioRecording } from '../context/AudioRecordingContext';
 
 export interface SectionContext {
   id: string;
@@ -236,8 +237,10 @@ export function AiAssistOverlay({
   const processingCount = Object.values(processingBySection).reduce((sum, s) => sum + s.count, 0);
   const totalCount = queue.length + processingCount;
 
+  const { isRecording } = useAudioRecording();
+
   const isScoped = !!sectionContext && !scopeDismissed;
-  const hasCaptureCallbacks = !!(onCameraPress || onMicPress || onPhotoPress);
+  const hasCaptureCallbacks = !!(onCameraPress || onMicPress || onPhotoPress) && !isRecording;
 
   useEffect(() => {
     if (visible) {

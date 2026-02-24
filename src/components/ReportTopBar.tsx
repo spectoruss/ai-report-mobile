@@ -6,11 +6,11 @@ import { FontAwesome7ProSolid } from './FontAwesome7ProSolid';
 import { useAiQueue } from '../context/AiQueueContext';
 
 // Width of the right-side buttons when fully shown:
-// 8 (gap) + 48 (sparkles) + 8 (gap) + 48 (ellipsis) = 112
-const RIGHT_EXPANDED_W = 112;
+// 48 (ellipsis) + 8 (gap) + 48 (sparkles) = 104 — leading gap to search pill handled by topBar gap: 8
+const RIGHT_EXPANDED_W = 104;
 // Width of the dismiss button slot when focused:
-// 8 (gap) + 48 (button) = 56
-const DISMISS_EXPANDED_W = 56;
+// 48 (button) — gap to search pill is handled by topBar gap: 8
+const DISMISS_EXPANDED_W = 48;
 
 interface ReportTopBarProps {
   navigation: any;
@@ -123,44 +123,47 @@ export function ReportTopBar({
         )}
       </View>
 
-      {/* Dismiss button — slides in from right when focused */}
-      <Animated.View
-        style={[styles.sideSlot, { width: dismissWidthAnim, opacity: dismissOpacity }]}
-        pointerEvents={isFocused ? 'auto' : 'none'}
-      >
-        <TouchableOpacity style={styles.dismissButton} activeOpacity={0.7} onPress={collapseSearch}>
-          <FontAwesome7Pro name="xmark" size={16} color="#052339" />
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Ellipsis + sparkles — slide out when focused */}
-      {/* Outer has no overflow so the badge can bleed; inner clip handles animation */}
-      <Animated.View
-        style={[styles.sideSlotOuter, { width: rightWidthAnim, opacity: rightOpacity }]}
-        pointerEvents={isFocused ? 'none' : 'auto'}
-      >
-        <View style={styles.sideSlotClip}>
-          <IconButton
-            name="ellipsis-vertical"
-            iconColor="#052339"
-            backgroundColor="#eef1f7"
-            borderRadius={16}
-            onPress={() => navigation.navigate('ToolbarConfig')}
-          />
-          <TouchableOpacity
-            style={styles.sparklesButton}
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('AiObservations')}
-          >
-            <FontAwesome7ProSolid name="sparkle" size={18} color="#052339" />
+      {/* Single right section — one flex child so topBar gap:8 applies exactly once */}
+      <View style={styles.rightSection}>
+        {/* Dismiss button — slides in from right when focused */}
+        <Animated.View
+          style={[styles.sideSlot, { width: dismissWidthAnim, opacity: dismissOpacity }]}
+          pointerEvents={isFocused ? 'auto' : 'none'}
+        >
+          <TouchableOpacity style={styles.dismissButton} activeOpacity={0.7} onPress={collapseSearch}>
+            <FontAwesome7Pro name="xmark" size={16} color="#052339" />
           </TouchableOpacity>
-        </View>
-        {totalCount > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{totalCount}</Text>
+        </Animated.View>
+
+        {/* Gear + sparkles — slide out when focused */}
+        {/* Outer has no overflow so the badge can bleed; inner clip handles animation */}
+        <Animated.View
+          style={[styles.sideSlotOuter, { width: rightWidthAnim, opacity: rightOpacity }]}
+          pointerEvents={isFocused ? 'none' : 'auto'}
+        >
+          <View style={styles.sideSlotClip}>
+            <IconButton
+              name="gear"
+              iconColor="#052339"
+              backgroundColor="#eef1f7"
+              borderRadius={16}
+              onPress={() => navigation.navigate('ToolbarConfig')}
+            />
+            <TouchableOpacity
+              style={styles.sparklesButton}
+              activeOpacity={0.7}
+              onPress={() => navigation.navigate('AiObservations')}
+            >
+              <FontAwesome7ProSolid name="sparkle" size={18} color="#052339" />
+            </TouchableOpacity>
           </View>
-        )}
-      </Animated.View>
+          {totalCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{totalCount}</Text>
+            </View>
+          )}
+        </Animated.View>
+      </View>
     </View>
   );
 }
@@ -171,7 +174,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    // No gap — spacing is handled by sideSlot leading margin
+    gap: 8,
   },
   searchPill: {
     flex: 1,
@@ -194,13 +197,17 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   } as any,
 
+  // Single right section — keeps exactly one 8px gap between it and the search pill
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   // Dismiss slot — overflow hidden clips the single button during animation
   sideSlot: {
     overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingLeft: 8,
   },
   // Right slot — outer has no overflow so badge bleeds naturally outside bounds
   sideSlotOuter: {
@@ -213,7 +220,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingLeft: 8,
   },
 
   dismissButton: {

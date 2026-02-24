@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Modal,
   StyleSheet,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
@@ -75,6 +76,7 @@ export function SectionPickerModal({
   if (!visible) return null;
 
   return (
+    <Modal visible={true} transparent={true} animationType="none" onRequestClose={onClose}>
     <>
       {/* Full-screen backdrop */}
       <TouchableOpacity
@@ -170,12 +172,13 @@ export function SectionPickerModal({
         </View>
       </Animated.View>
     </>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   backdrop: {
-    zIndex: 50,
+    zIndex: 1002,
   },
 
   // ── Add button ────────────────────────────────────────────────────────────
@@ -183,7 +186,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: PANEL_LEFT,
     bottom: PANEL_MAX_HEIGHT + 12,
-    zIndex: 52,
+    zIndex: 1004,
     borderRadius: ADD_BTN_SIZE / 2,
     shadowColor: '#09334b',
     shadowOffset: { width: 0, height: 10 },
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
     left: PANEL_LEFT,
     right: PANEL_RIGHT,
     bottom: 12,
-    zIndex: 51,
+    zIndex: 1003,
     borderRadius: 16,
     shadowColor: '#09334b',
     shadowOffset: { width: 0, height: 10 },

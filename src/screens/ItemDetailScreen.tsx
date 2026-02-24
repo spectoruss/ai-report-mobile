@@ -5,15 +5,16 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { REPORT_SECTIONS, Comment } from '../data/mockData';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { IconButton } from '../components/IconButton';
 import { ReportTopBar } from '../components/ReportTopBar';
 import { CaptureActionBar } from '../components/CaptureActionBar';
-import { AudioBottomSheet } from '../components/AudioBottomSheet';
 import { AppBottomSheet } from '../components/AppBottomSheet';
 import { AttachMediaSheet } from '../components/AttachMediaSheet';
 import { ProcessedBanner } from '../components/ProcessedBanner';
@@ -21,6 +22,7 @@ import { SectionPickerModal } from '../components/SectionPickerModal';
 import { CoachmarkOverlay } from '../components/CoachmarkOverlay';
 import { AiAssistOverlay } from '../components/AiAssistOverlay';
 import { useAiQueue } from '../context/AiQueueContext';
+import { useAudioRecording } from '../context/AudioRecordingContext';
 
 interface ItemDetailScreenProps {
   navigation: any;
@@ -46,21 +48,64 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
   const [checkedOptions, setCheckedOptions] = useState<Record<string, boolean>>({});
   const [comments, setComments] = useState<Comment[]>(subsection.comments ?? []);
   const [sectionPickerVisible, setSectionPickerVisible] = useState(false);
-  const [audioSheetVisible, setAudioSheetVisible] = useState(false);
   const [attachMediaVisible, setAttachMediaVisible] = useState(false);
+  const [recordingWarningVisible, setRecordingWarningVisible] = useState(false);
   const [inputType, setInputType] = useState<InputType>('mic');
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const pendingTranscript = useRef<string>('');
+  const pendingSectionId = useRef<string | null>(null);
+  const { isRecording, recordingSectionId, startRecording, cancelRecording } = useAudioRecording();
+  const isRecordingRef = useRef(false);
 
   const { addToQueue, showCoachmark, dismissCoachmark, showItemCoachmark, triggerItemCoachmark, dismissItemCoachmark } = useAiQueue();
+
+  useEffect(() => { isRecordingRef.current = isRecording && recordingSectionId === sectionId; }, [isRecording, recordingSectionId]);
 
   useEffect(() => {
     triggerItemCoachmark();
     const unsubscribe = navigation.addListener('blur', () => {
       dismissItemCoachmark();
       dismissCoachmark();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (!isRecordingRef.current) return;
+      const action = e.data.action;
+      // Allow going back to SectionDetailScreen of the same section
+      if (action.type === 'GO_BACK' || action.type === 'POP') return;
+      // Allow replacing with another ItemDetail in the same section
+      if (
+        action.type === 'REPLACE' &&
+        action.payload?.name === 'ItemDetail' &&
+        action.payload?.params?.sectionId === sectionId
+      ) return;
+      // Allow replacing with SectionDetail of the same section
+      if (
+        action.type === 'REPLACE' &&
+        action.payload?.name === 'SectionDetail' &&
+        action.payload?.params?.sectionId === sectionId
+      ) return;
+      e.preventDefault();
+      Alert.alert(
+        'Recording in progress',
+        'Navigating away will stop the recording.',
+        [
+          { text: 'Stay', style: 'cancel' },
+          {
+            text: 'Stop Recording',
+            style: 'destructive',
+            onPress: () => {
+              cancelRecording();
+              navigation.dispatch(e.data.action);
+            },
+          },
+        ],
+      );
     });
     return unsubscribe;
   }, [navigation]);
@@ -73,12 +118,11 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   function openInput(type: InputType) {
     setInputType(type);
-    setAudioSheetVisible(true);
+    startRecording(sectionId, handleAudioConfirm);
   }
 
   function handleAudioConfirm(transcript: string) {
     pendingTranscript.current = transcript;
-    setAudioSheetVisible(false);
     setAttachMediaVisible(true);
   }
 
@@ -168,8 +212,10 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   function handlePrevItem() {
     if (hasPrevItem) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       navigation.replace('ItemDetail', { sectionId, subsectionId: section.subsections[subsectionIndex - 1].id });
     } else if (hasPrevSection) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const prevSection = REPORT_SECTIONS[sectionIndex - 1];
       navigation.replace('ItemDetail', { sectionId: prevSection.id, subsectionId: prevSection.subsections[prevSection.subsections.length - 1].id });
     }
@@ -177,8 +223,10 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   function handleNextItem() {
     if (hasNextItem) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       navigation.replace('ItemDetail', { sectionId, subsectionId: section.subsections[subsectionIndex + 1].id });
     } else if (hasNextSection) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const nextSection = REPORT_SECTIONS[sectionIndex + 1];
       navigation.replace('ItemDetail', { sectionId: nextSection.id, subsectionId: nextSection.subsections[0].id });
     }
@@ -186,16 +234,23 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
   function handlePrevSection() {
     if (!hasPrevSection) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex - 1].id });
   }
 
   function handleNextSection() {
     if (!hasNextSection) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex + 1].id });
   }
 
   function handleSectionSelect(id: string) {
-    navigation.replace('SectionDetail', { sectionId: id });
+    if (isRecording && recordingSectionId === sectionId && id !== sectionId) {
+      pendingSectionId.current = id;
+      setRecordingWarningVisible(true);
+    } else {
+      navigation.replace('SectionDetail', { sectionId: id });
+    }
   }
 
   const prevDisabled = !hasPrevItem && !hasPrevSection;
@@ -212,7 +267,10 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
 
       <View style={styles.scrollWrapper}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.itemTitle}>{subsection.title}</Text>
+          <View style={styles.itemTitleRow}>
+            <FontAwesome7Pro name={section.icon} size={20} color="#052339" />
+            <Text style={styles.itemTitle}>{subsection.title}</Text>
+          </View>
 
           {/* Comment chips — AI-generated observations for this item */}
           {comments.length > 0 && (
@@ -258,9 +316,10 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
           )}
         </ScrollView>
 
-        {/* Floating capture bar */}
+        {/* Floating capture bar — slides right when audio sheet is active */}
         <View style={styles.floatingBar}>
           <CaptureActionBar
+            sectionId={sectionId}
             onMicPress={() => openInput('mic')}
             onCameraAiPress={handleDirectCamera}
             onPhotoPress={handleDirectGallery}
@@ -319,20 +378,6 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
         onAddSection={() => navigation.navigate('NewSection')}
       />
 
-      {/* Coachmark — explain tap vs press & hold */}
-      <CoachmarkOverlay
-        show={showItemCoachmark}
-        onDismiss={dismissItemCoachmark}
-        variant="bottom"
-        bottomOffset={insets.bottom + 73}
-        caretRight={40}
-        title="Using the arrows"
-        items={[
-          { iconName: 'arrow-pointer', description: 'Tap to move to the next or previous item' },
-          { iconName: 'hand', description: 'Press & hold to jump to a different section' },
-        ]}
-      />
-
       {/* Coachmark — Ai queue added */}
       <CoachmarkOverlay
         show={showCoachmark}
@@ -342,12 +387,42 @@ export function ItemDetailScreen({ navigation, route }: ItemDetailScreenProps) {
         items={[{ iconName: 'arrow-pointer', description: 'Go back to the queue when ready to process' }]}
       />
 
-      <AudioBottomSheet
-        visible={audioSheetVisible}
-        onCancel={() => setAudioSheetVisible(false)}
-        onConfirm={handleAudioConfirm}
-        inputType={inputType}
-      />
+
+      {/* Recording warning sheet */}
+      <AppBottomSheet
+        visible={recordingWarningVisible}
+        onClose={() => setRecordingWarningVisible(false)}
+      >
+        <View style={styles.warningSheet}>
+          <Text style={styles.warningTitle}>Stop recording?</Text>
+          <Text style={styles.warningBody}>
+            Navigating to a different section will stop your current recording.
+          </Text>
+          <TouchableOpacity
+            style={styles.warningLeaveButton}
+            activeOpacity={0.8}
+            onPress={() => {
+              const target = pendingSectionId.current;
+              pendingSectionId.current = null;
+              setRecordingWarningVisible(false);
+              if (target) {
+                isRecordingRef.current = false;
+                cancelRecording();
+                navigation.replace('SectionDetail', { sectionId: target });
+              }
+            }}
+          >
+            <Text style={styles.warningLeaveText}>Stop Recording & Leave</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.warningStayButton}
+            activeOpacity={0.8}
+            onPress={() => setRecordingWarningVisible(false)}
+          >
+            <Text style={styles.warningStayText}>Stay & Finish</Text>
+          </TouchableOpacity>
+        </View>
+      </AppBottomSheet>
 
       <AppBottomSheet visible={attachMediaVisible} onClose={() => setAttachMediaVisible(false)}>
         <AttachMediaSheet
@@ -380,18 +455,23 @@ const styles = StyleSheet.create({
   },
   scrollWrapper: { flex: 1 },
   scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 96 },
+  scrollContent: { padding: 20, paddingTop: 8, paddingBottom: 96 },
   floatingBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
   },
+  itemTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
   itemTitle: {
     fontSize: 22,
     fontWeight: '600',
     color: '#052339',
-    marginBottom: 20,
   },
 
   // ── Comment chips ──────────────────────────────────────────────────────────
@@ -519,5 +599,44 @@ const styles = StyleSheet.create({
   },
   navButtonDisabled: {
     opacity: 0.35,
+  },
+  warningSheet: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 20,
+    gap: 12,
+  },
+  warningTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#052339',
+  },
+  warningBody: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  warningLeaveButton: {
+    backgroundColor: '#ef4444',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  warningLeaveText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  warningStayButton: {
+    backgroundColor: '#eef1f7',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  warningStayText: {
+    color: '#052339',
+    fontSize: 15,
+    fontWeight: '500',
   },
 });

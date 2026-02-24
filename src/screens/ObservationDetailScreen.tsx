@@ -9,6 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome7Pro } from '../components/FontAwesome7Pro';
 import { FontAwesome7ProSolid } from '../components/FontAwesome7ProSolid';
+import { IconButton } from '../components/IconButton';
 import { useAiQueue, AiCollection } from '../context/AiQueueContext';
 
 interface ObservationDetailScreenProps {
@@ -40,13 +41,13 @@ export function ObservationDetailScreen({ navigation, route }: ObservationDetail
     <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          activeOpacity={0.7}
+        <IconButton
+          name="arrow-left"
+          iconColor="#052339"
+          backgroundColor="#eef1f7"
+          borderRadius={16}
           onPress={() => navigation.goBack()}
-        >
-          <FontAwesome7Pro name="arrow-left" size={18} color="#052339" />
-        </TouchableOpacity>
+        />
       </View>
 
       <ScrollView
@@ -134,14 +135,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
-  },
-  backButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#eef1f7',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   scroll: { flex: 1 },
   scrollContent: {
