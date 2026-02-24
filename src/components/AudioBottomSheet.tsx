@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome7Pro } from './FontAwesome7Pro';
@@ -7,15 +7,14 @@ import { useAudioRecording } from '../context/AudioRecordingContext';
 
 const BOTTOM_BAR_CLEARANCE = 73;
 const WAVEFORM_BARS = 26;
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export function AudioBottomSheet() {
   const { isRecording, elapsed, cancelRecording, confirmRecording, isSearchOpen } = useAudioRecording();
   const insets = useSafeAreaInsets();
   const [mounted, setMounted] = useState(false);
 
-  // JS driver — translateX for right-side entrance/exit
-  const slideAnim = useRef(new Animated.Value(SCREEN_WIDTH)).current;
+  // JS driver — translateY for bottom entrance/exit
+  const slideAnim = useRef(new Animated.Value(200)).current;
 
   // Drives the morph: 0 = full blue pill, 1 = gray recorder
   const morphAnim = useRef(new Animated.Value(0)).current;
@@ -34,7 +33,7 @@ export function AudioBottomSheet() {
   useEffect(() => {
     if (isRecording) {
       setMounted(true);
-      slideAnim.setValue(SCREEN_WIDTH);
+      slideAnim.setValue(200);
       morphAnim.setValue(0);
       confirmScale.setValue(1.18);
 
@@ -62,7 +61,7 @@ export function AudioBottomSheet() {
     } else {
       waveAnimRef.current?.stop();
       Animated.timing(slideAnim, {
-        toValue: SCREEN_WIDTH,
+        toValue: 200,
         duration: 220,
         useNativeDriver: false,
       }).start(() => setMounted(false));
@@ -138,7 +137,7 @@ export function AudioBottomSheet() {
         styles.gradientContainer,
         {
           bottom: insets.bottom + BOTTOM_BAR_CLEARANCE,
-          transform: [{ translateX: slideAnim }, { translateY: searchShiftAnim }],
+          transform: [{ translateY: Animated.add(slideAnim, searchShiftAnim) }],
         },
       ]}
     >
