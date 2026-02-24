@@ -106,6 +106,14 @@ export function SectionDetailScreen({ navigation, route }: SectionDetailScreenPr
     setAttachMediaVisible(true);
   }
 
+  function goToPrev() {
+    if (hasPrev) navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex - 1].id });
+  }
+
+  function goToNext() {
+    if (hasNext) navigation.replace('SectionDetail', { sectionId: REPORT_SECTIONS[sectionIndex + 1].id });
+  }
+
   function handleNotNow() {
     const subsection = section.subsections.find(ss => ss.id === activeSubsectionId);
     const isAudio = inputType === 'mic';
@@ -589,7 +597,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e8eaed',
     backgroundColor: '#ffffff',
   },
-  sectionPill: {
+  searchPill: {
     flex: 1,
     height: 48,
     backgroundColor: '#eef1f7',
@@ -597,7 +605,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
   sectionPillText: {
     flex: 1,
