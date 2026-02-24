@@ -138,16 +138,15 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingTop: 8,
     paddingBottom: 32,
   },
   title: {
-    fontSize: 21,
-    fontWeight: '500',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#052339',
-    letterSpacing: -0.44,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   photoGrid: {
     flexDirection: 'row',

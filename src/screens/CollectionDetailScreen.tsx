@@ -21,6 +21,8 @@ export function CollectionDetailScreen({ navigation, route }: CollectionDetailSc
         <IconButton
           name="arrow-left"
           iconColor="#052339"
+          backgroundColor="#eef1f7"
+          borderRadius={16}
           onPress={() => navigation.goBack()}
         />
         <Text style={styles.title} numberOfLines={1}>
@@ -53,7 +55,7 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
     color: '#052339',
   },

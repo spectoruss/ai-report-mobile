@@ -268,7 +268,8 @@ export function ToolbarConfigScreen({ navigation }: ToolbarConfigScreenProps) {
         <IconButton
           name="arrow-left"
           iconColor="#052339"
-          backgroundColor="rgba(0,0,0,0.05)"
+          backgroundColor="#eef1f7"
+          borderRadius={16}
           onPress={() => navigation.goBack()}
         />
         <View style={{ flex: 1 }} />
@@ -347,14 +348,14 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '500',
+    fontSize: 22,
+    fontWeight: '600',
     color: '#052339',
-    marginTop: 12,
-    letterSpacing: -0.44,
+    marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,

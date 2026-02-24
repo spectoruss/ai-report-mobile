@@ -608,6 +608,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
   },
+  sectionPill: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#eef1f7',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    overflow: 'hidden',
+  },
   sectionPillText: {
     flex: 1,
     fontSize: 15,
